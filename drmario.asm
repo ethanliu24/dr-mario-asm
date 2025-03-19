@@ -251,26 +251,23 @@ draw_line_column:
 back_to_draw_bottle: jr $ra
 
 finish_keyboard_input:
-
-    # 2a. Check for collisions
-	# 2b. Update locations (capsules)
-	# 3. Draw the screen
-
-	# 4. Sleep
+    # generate new capsule when can't move down (i.e. when $v0 == 0)
+	beq $v0, 1, game_loop
+	lw $s6, READY
+	jal dequeue_capsule
+    
+	# Sleep
 	li 		$v0, 32
 	li 		$a0, 1
 	syscall
 
-    # 5. Go back to Step 1
+    # Go back to Step 1
     j game_loop
 
 keyboard_input:                     # A key is pressed
     lw $a0, 4($t0)                  # Load second word from keyboard
+    addi $v0, $zero, 1
     beq $a0, 0x71, respond_to_Q     # Check if the key q was pressed
-    beq $a0, 0x77, respond_to_W     # Check if the key w was pressed
-    beq $a0, 0x61, respond_to_A     # Check if the key a was pressed
-    beq $a0, 0x73, respond_to_S     # Check if the key s was pressed
-    beq $a0, 0x64, respond_to_D     # Check if the key d was pressed
     beq $a0, 0x77, respond_to_W     # Check if the key w was pressed
     beq $a0, 0x61, respond_to_A     # Check if the key a was pressed
     beq $a0, 0x73, respond_to_S     # Check if the key s was pressed

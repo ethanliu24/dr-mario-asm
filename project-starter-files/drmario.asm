@@ -98,8 +98,13 @@ game_loop:
     jal draw_capsule_queue
 
     # handle game states
+    lw $t1, GAME_OVER
+    beq $s6, $t1, respond_to_Q
     lw $t1, READY
     beq $s6, $t1, handle_ready_state
+    lw $t1, ENTERING
+    beq $s6, $t1, handle_entering_state
+    # else: falling state
     
     # 60 fps
     li $v0, 32
@@ -115,6 +120,10 @@ game_loop:
     li $v0, 1
     li $a0, 1
     syscall
+    lw $s6, READY
+    jal dequeue_capsule
+    
+    j game_loop
     
 handle_ready_state:
     lw $t0, CAPSULE_INIT_POS
@@ -131,19 +140,42 @@ handle_ready_state:
 handle_entering_state:
     # animation for capsule to move into bottle
     lw $t0, CAPSULE_INIT_POS
+    addi $t1, $sp, -8
     
     li $v0, 32
     li $a0, 1000
     syscall
     
+    lw $t2, BLACK
+    sw $t2, 0($t0)
+    lw $t2, 0($t1)
+    sw $t2, 256($t0)
+    lw $t2, 4($t1)
+    sw $t2, 512($t0)
+    
+    li $v0, 32
+    li $a0, 1000
+    syscall
+    
+    lw $t2, BLACK
+    sw $t2, 256($t0)
+    lw $t2, 0($t1)
+    sw $t2, 512($t0)
+    lw $t2, 4($t1)
+    sw $t2, 768($t0)
+    
+    # TODO stores the display addr, may need to change depending on the matrix location
+    lw $s0, 512($t0)
+    lw $s1, 768($t0)
     addi $s7, $zero, 0  # reset fps counter to avoid sudden changes due to previous fps values
+    lw $s6, FALLING
     j game_loop
     
 skip_gravity:
     # TODO remove print
-    li $v0, 1
-    li $a0, 0
-    syscall
+    # li $v0, 1
+    # li $a0, 0
+    # syscall
     j game_loop
     
 draw_bottle:
@@ -576,14 +608,30 @@ which_capsule_5:
     add $t0, $zero, $t0
     sw $t0, 4($a2)
     jr $ra
+
+# Intended to be called after the current capsule can't move down anymore. 
+# It will dequeue the first capsule (the current capsule) and generate another one in the queue.
+dequeue_capsule:
+    addi $t0, $sp, -16
+    addi $t1, $zero, 0
+    j shift_queue
     
-# draws the capsule at the bottle neck 
-# TODO the function jumping may be changed later when generation state management is implemented
-draw_capsule:
-    # lw $t0, CAPSULE_INIT_POS
-    # sw $v0, 0($t0)
-    # sw $v1, 256($t0)
-    jr $ra
+# $t0: position of a capsule in the queue
+# $t1: loop counter
+shift_queue:
+    # shift a single capsule
+    lw $t2, 0($t0)
+    sw $t2, 8($t0)
+    lw $t2, 4($t0)
+    sw $t2, 12($t0)
+    
+    addi $t0, $t0, -8
+    addi $t1, $t1, 1
+    bne $t1, 5, shift_queue
+    
+    # generate a capsule at the last position in the queue
+    addi $a2, $sp, -48
+    j generate_capsule
     
 # t0 represents to the stack address of the capsule
 # t1 represents the position on the display to draw the capsule

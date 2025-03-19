@@ -52,7 +52,7 @@ HEIGHT:
 WIDTH:
     .word 0x000011
 START:
-    .word 0x00000614
+    .word 0x10008618    # ADDR_DSPL + 6x6 + 6x256
     
 # game states
 GAME_OVER:  # game over
@@ -265,10 +265,10 @@ finish_keyboard_input:
 keyboard_input:                     # A key is pressed
     lw $a0, 4($t0)                  # Load second word from keyboard
     beq $a0, 0x71, respond_to_Q     # Check if the key q was pressed
-    beq $a0, 0x57, respond_to_W     # Check if the key w was pressed
-    beq $a0, 0x41, respond_to_A     # Check if the key a was pressed
-    beq $a0, 0x53, respond_to_S     # Check if the key s was pressed
-    beq $a0, 0x44, respond_to_D     # Check if the key d was pressed
+    beq $a0, 0x77, respond_to_W     # Check if the key w was pressed
+    beq $a0, 0x61, respond_to_A     # Check if the key a was pressed
+    beq $a0, 0x73, respond_to_S     # Check if the key s was pressed
+    beq $a0, 0x64, respond_to_D     # Check if the key d was pressed
 
     # li $v0, 1                       # ask system to print $a0
     # syscall
@@ -289,8 +289,8 @@ respond_to_W:
     
     lw $t0, 0($a0)      # coordinate 1 in matrix
     lw $t1, 0($a1)      # coordinate 2 in matrix
-    lw $t2, BLACK       # BLACK
-    add $t2, $zero, $t2 # store BLACK
+    la $t7, BLACK       
+    lw $t2, 0($t7)      # BLACK
     
     beq $a2, 0, respond_to_W_top_to_right       # original state
     beq $a2, 1, respond_to_W_right_to_bottom    # 1 rotation
@@ -379,8 +379,8 @@ respond_to_A:
     
     lw $t0, 0($a0)      # coordinate 1 in matrix
     lw $t1, 0($a1)      # coordinate 2 in matrix
-    lw $t2, BLACK       # BLACK
-    add $t2, $zero, $t2 # store BLACK
+    la $t7, BLACK       
+    lw $t2, 0($t7)      # BLACK
 
 respond_to_A_vertical_horizontal:
     lw $t3, -4($a0)      # store colour of left address
@@ -409,8 +409,8 @@ respond_to_D:
     
     lw $t0, 0($a0)      # coordinate 1 in matrix
     lw $t1, 0($a1)      # coordinate 2 in matrix
-    lw $t2, BLACK       # BLACK
-    add $t2, $zero, $t2 # store BLACK
+    la $t7, BLACK       
+    lw $t2, 0($t7)      # BLACK
 
 respond_to_D_vertical_horizontal:
     lw $t3, 4($a1)      # store colour of right address
@@ -449,8 +449,8 @@ move_down:
     
     lw $t0, 0($a0)      # coordinate 1 in matrix
     lw $t1, 0($a1)      # coordinate 2 in matrix
-    lw $t2, BLACK       # BLACK
-    add $t2, $zero, $t2 # store BLACK
+    la $t7, BLACK       
+    lw $t2, 0($t7)      # BLACK
     
     addi $t6, $zero, 1  # store 1
     lw $t7, 0($a2)      # check if function called by respond_to_S, 1 if yes, 0 if not
@@ -677,12 +677,13 @@ generate_virus_red:
     mult $t1, $t6
     mflo $t1            # multiply by 256 and store result
 
-    la $t5, START       # store START address
+    la $t2, START       
+    lw $t5, 0($t2)      # store START address
     add $t5, $t5, $t0   # add columns to START
     add $t5, $t5, $t1   # add rows to START + columns, final address to store virus
 
-    lw $t3, VIRUS_RED   # VIRUS_RED
-    add $t3, $zero, $t3 # store VIRUS_RED
+    la $t2, VIRUS_RED
+    lw $t3, 0($t2)      # VIRUS_RED
 
     sw $t3, 0($t5)      # store VIRUS_RED at virus location
 
@@ -709,12 +710,13 @@ generate_virus_blue:
     mult $t1, $t6
     mflo $t1            # multiply by 256 and store result
 
-    la $t5, START       # store START address
+    la $t2, START       
+    lw $t5, 0($t2)      # store START address
     add $t5, $t5, $t0   # add columns to START
     add $t5, $t5, $t1   # add rows to START + columns, final address to store virus
 
-    lw $t3, VIRUS_BLUE  # VIRUS_BLUE
-    add $t3, $zero, $t3 # store VIRUS_BLUE
+    la $t2, VIRUS_BLUE
+    lw $t3, 0($t2)      # VIRUS_BLUE
 
     sw $t3, 0($t5)      # store VIRUS_BLUE at virus location
 
@@ -741,37 +743,19 @@ generate_virus_yellow:
     mult $t1, $t6
     mflo $t1            # multiply by 256 and store result
 
-    lw $t5, START       # store START address
+    la $t2, START       
+    lw $t5, 0($t2)      # store START address
     add $t5, $t5, $t0   # add columns to START
     add $t5, $t5, $t1   # add rows to START + columns, final address to store virus
 
-    lw $t3, VIRUS_YELLOW    # VIRUS_YELLOW
-    add $t3, $zero, $t3     # store VIRUS_YELLOW
+    la $t2, VIRUS_YELLOW
+    lw $t3, 0($t2)      # VIRUS_YELLOW
 
     sw $t3, 0($t5)      # store VIRUS_YELLOW at virus location
 
 
 # in case of horizontal or vertical matching, remove adjacent blocks
 check_pattern:
-    lw   $t5, START     # Load base address of matrix into $t5
-    li   $t6, 24        # Height of matrix (number of rows)
-    li   $t7, 17        # Width of matrix (number of columns)
-    li   $t1, 0         # Row index (i)
-
-check_pattern_row_loop:
-    li   $t2, 0         # Column index (j)
-
-check_pattern_col_loop:
-    mul  $t3, $t1, 68   # Row offset: i * (17 * 4)
-    mul  $t4, $t2, 4    # Column offset: j * 4
-    add  $t8, $t5, $t3  # Base address + row offset
-    add  $t8, $t8, $t4  # Add column offset
-
-    lw   $t9, 0($t8)    # Load matrix[i][j] into $t9
-
-    addi $t2, $t2, 1    # j++
-    blt  $t2, $t7, check_pattern_col_loop  # If j < 17, repeat
-
-    addi $t1, $t1, 1    # i++
-    blt  $t1, $t6, check_pattern_row_loop  # If i < 24, repeat
+    la $t1, START
+    lw $t2, 0($t1)
     

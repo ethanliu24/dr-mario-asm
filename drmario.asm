@@ -53,7 +53,7 @@ HEIGHT:
 WIDTH:
     .word 0x000011
 START:
-    .word 0x10008618    # ADDR_DSPL + 6x6 + 6x256
+    .word 0x10008514    # ADDR_DSPL + 5x4 + 5x256
 
 # game states
 GAME_OVER:  # game over
@@ -81,7 +81,7 @@ main:
     # Initialize the game
     addi $s6, $zero, 1  # s6 repr the game state, 1 is ready state
     addi $s7, $zero, 0  # fps counter
-
+    
     j draw_bottle  # will jump to init_capsules
 
 game_loop:
@@ -224,7 +224,7 @@ draw_bottle:
     li $a0, 26
     jal draw_line_column
 
-    j init_capsules
+    j generate_virus
 
 draw_line_row:
     beq $t1, $a0, back_to_draw_bottle
@@ -540,7 +540,6 @@ which_capsule:
     li $v0 , 42
     li $a0 , 0
     li $a1 , 6
-    li $a1 , 6
     syscall
 
     # invoke specific colour function based on number generated
@@ -667,6 +666,10 @@ draw_capsule_queue:
 generate_virus:
     addi $t7, $zero, 4      # store 4
     addi $t6, $zero, 256    # store 256
+    jal generate_virus_red
+    jal generate_virus_blue
+    jal generate_virus_yellow
+    j init_capsules
 
 generate_virus_red:
     # generate random number between 0 and 17 (exclusive) to decide which column to display virus on
@@ -676,7 +679,7 @@ generate_virus_red:
     li $a1, 17
     syscall
 
-    lw $t0, 0($a0)  # random column
+    add $t0, $zero, $a0  # random column
     mult $t0, $t7
     mflo $t0        # multiply by 4 and store result
 
@@ -700,6 +703,7 @@ generate_virus_red:
     lw $t3, 0($t2)      # VIRUS_RED
 
     sw $t3, 0($t5)      # store VIRUS_RED at virus location
+    jr $ra
 
 generate_virus_blue:
     # generate random number between 0 and 17 (exclusive) to decide which column to display virus on
@@ -709,7 +713,7 @@ generate_virus_blue:
     li $a1, 17
     syscall
 
-    lw $t0, 0($a0)  # random column
+    add $t0, $zero, $a0  # random column
     mult $t0, $t7
     mflo $t0        # multiply by 4 and store result
 
@@ -733,6 +737,7 @@ generate_virus_blue:
     lw $t3, 0($t2)      # VIRUS_BLUE
 
     sw $t3, 0($t5)      # store VIRUS_BLUE at virus location
+    jr $ra
 
 generate_virus_yellow:
     # generate random number between 0 and 17 (exclusive) to decide which column to display virus on
@@ -742,7 +747,7 @@ generate_virus_yellow:
     li $a1, 17
     syscall
 
-    lw $t0, 0($a0)  # random column
+   add $t0, $zero, $a0  # random column
     mult $t0, $t7
     mflo $t0        # multiply by 4 and store result
 
@@ -766,6 +771,7 @@ generate_virus_yellow:
     lw $t3, 0($t2)      # VIRUS_YELLOW
 
     sw $t3, 0($t5)      # store VIRUS_YELLOW at virus location
+    jr $ra
 
 
 # in case of horizontal or vertical matching, remove adjacent blocks

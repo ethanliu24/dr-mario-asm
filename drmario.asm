@@ -3,17 +3,11 @@
 #
 # Student 1: Ethan Liu, 1010290338
 # Student 2: Jai Joshi, 1009881013
-# Student 1: Ethan Liu, 1010290338
-# Student 2: Jai Joshi, 1009881013
 #
 # We assert that the code submitted here is entirely our own
 # creation, and will indicate otherwise when it is not.
 #
 ######################## Bitmap Display Configuration ########################
-# - Unit width in pixels:       1
-# - Unit height in pixels:      1
-# - Display width in pixels:    64
-# - Display height in pixels:   64
 # - Unit width in pixels:       1
 # - Unit height in pixels:      1
 # - Display width in pixels:    64
@@ -172,8 +166,9 @@ handle_entering_state:
     sw $t2, 768($t0)
 
     # TODO stores the display addr, may need to change depending on the matrix location
-    lw $s0, 512($t0)
-    lw $s1, 768($t0)
+    li $a2, 0
+    addi $s0, $t0, 512
+    addi $s1, $t0, 768
     addi $s7, $zero, 0  # reset fps counter to avoid sudden changes due to previous fps values
     lw $s6, FALLING
     j game_loop
@@ -787,5 +782,21 @@ generate_virus_yellow:
 # in case of horizontal or vertical matching, remove adjacent blocks
 check_pattern:
     la $t1, START
-    lw $t2, 0($t1)
+    lw $t7, 0($t1)
+    addi $t7, $t7, 6144 # 256x24, to go to last row first column
+    
+check_pattern_horizontal:
+    li $t0, 0   # i = 0, row, max 24
+    li $t1, 0   # j = 0, column, max 17
 
+check_pattern_horizontal_inner_loop:
+    beq $t1, 17, check_pattern_horizontal_outer_loop
+    addi $t1, $t1, 1
+    
+check_pattern_horizontal_outer_loop:
+    
+    
+check_pattern_vertical:
+    
+    
+move_down_delete:

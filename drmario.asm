@@ -116,15 +116,7 @@ game_loop:
     addi $s7, $s7, 1
     bne $s7, 60, skip_gravity
     addi $s7, $zero, 0
-    # TODO move capsule down
-    # TODO remove print
-    li $v0, 1
-    li $a0, 1
-    syscall
-    # lw $s6, READY
-    # jal dequeue_capsule
-
-    j game_loop
+    j move_down
 
 handle_ready_state:
     lw $t0, CAPSULE_INIT_POS
@@ -165,7 +157,7 @@ handle_entering_state:
     lw $t2, 4($t1)
     sw $t2, 768($t0)
 
-    # TODO stores the display addr, may need to change depending on the matrix location
+    # stores the addr in matrix
     li $a2, 0
     addi $s0, $t0, 512
     addi $s1, $t0, 768

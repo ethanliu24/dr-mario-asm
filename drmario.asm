@@ -82,6 +82,12 @@ main:
     addi $s6, $zero, 1  # s6 repr the game state, 1 is ready state
     addi $s7, $zero, 0  # fps counter
     
+    # initialize virus counter 
+    # TODO add comemnts for color
+    addi $s3, $zero, 1
+    addi $s4, $zero, 1
+    addi $s5, $zero, 1
+    
     j draw_bottle  # will jump to init_capsules
 
 game_loop:

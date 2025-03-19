@@ -91,12 +91,6 @@ main:
     j draw_bottle  # will jump to init_capsules
 
 game_loop:
-    # 1a. Check if key has been pressed
-    # 1b. Check which key has been pressed
-    lw $t0, ADDR_KBRD               # $t0 = base address for keyboard
-    lw $t8, 0($t0)                  # Load first word from keyboard
-    beq $t8, 1, keyboard_input      # If first word 1, key is pressed
-
     # draw the upcomming capsules
     addi $t0, $sp, -16
     lw $t1, CAPSULE_INIT_POS
@@ -112,6 +106,12 @@ game_loop:
     lw $t1, ENTERING
     beq $s6, $t1, handle_entering_state
     # else: falling state
+    
+    # 1a. Check if key has been pressed
+    # 1b. Check which key has been pressed
+    lw $t0, ADDR_KBRD               # $t0 = base address for keyboard
+    lw $t8, 0($t0)                  # Load first word from keyboard
+    beq $t8, 1, keyboard_input      # If first word 1, key is pressed
 
     # 60 fps
     li $v0, 32
@@ -127,8 +127,8 @@ game_loop:
     li $v0, 1
     li $a0, 1
     syscall
-    lw $s6, READY
-    jal dequeue_capsule
+    # lw $s6, READY
+    # jal dequeue_capsule
 
     j game_loop
 
@@ -464,7 +464,7 @@ move_down:
     lw $t2, 0($t7)      # BLACK
 
     addi $t6, $zero, 1  # store 1
-    lw $t7, 0($a2)      # check if function called by respond_to_S, 1 if yes, 0 if not
+    add $t7, $a2 $zero  # check if function called by respond_to_S, 1 if yes, 0 if not
 
     add $v0, $zero, $zero   # initialize return value of 0
 

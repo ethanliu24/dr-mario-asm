@@ -52,7 +52,7 @@ HEIGHT:
 WIDTH:
     .word 0x000011
 START:
-    .word 0x00000614
+    .word 0x10008618    # ADDR_DSPL + 6x6 + 6x256
     
 # game states
 GAME_OVER:  # game over

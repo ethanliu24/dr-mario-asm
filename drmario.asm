@@ -233,10 +233,10 @@ finish_keyboard_input:
 keyboard_input:                     # A key is pressed
     lw $a0, 4($t0)                  # Load second word from keyboard
     beq $a0, 0x71, respond_to_Q     # Check if the key q was pressed
-    beq $a0, 0x57, respond_to_W     # Check if the key w was pressed
-    beq $a0, 0x41, respond_to_A     # Check if the key a was pressed
-    beq $a0, 0x53, respond_to_S     # Check if the key s was pressed
-    beq $a0, 0x44, respond_to_D     # Check if the key d was pressed
+    beq $a0, 0x77, respond_to_W     # Check if the key w was pressed
+    beq $a0, 0x61, respond_to_A     # Check if the key a was pressed
+    beq $a0, 0x73, respond_to_S     # Check if the key s was pressed
+    beq $a0, 0x64, respond_to_D     # Check if the key d was pressed
 
     # li $v0, 1                       # ask system to print $a0
     # syscall

@@ -111,20 +111,16 @@ game_loop:
     lw $t0, ADDR_KBRD               # $t0 = base address for keyboard
     lw $t8, 0($t0)                  # Load first word from keyboard
     beq $t8, 1, keyboard_input      # If first word 1, key is pressed
-
+    
     # handle game states
+    lw $t1, GAME_OVER
+    beq $s6, $t1, handle_game_over_state
     lw $t1, READY
     beq $s6, $t1, handle_ready_state
     lw $t1, ENTERING
     beq $s6, $t1, handle_entering_state
-    
 
-
-    # after key presses because need to listen to replay key press
-    lw $t1, GAME_OVER
-    beq $s6, $t1, handle_game_over_state
-    
-    # falling state
+    # handle falling state
     
     # 60 fps
     li $v0, 32

@@ -11,7 +11,7 @@
 # - Unit width in pixels:       1
 # - Unit height in pixels:      1
 # - Display width in pixels:    64
-# - Display height in pixels:   64
+# - Display height in pixels:   32
 # - Base Address for Display:   0x10008000 ($gp)
 ##############################################################################
 
@@ -78,16 +78,18 @@ FALLING:  # player can control the capsule
 
     # Run the game.
 main:
-    # Initialize the game
+    j initialize_game
+
+initialize_game:
     addi $s6, $zero, 1  # s6 repr the game state, 1 is ready state
     addi $s7, $zero, 0  # fps counter
     
     # initialize virus counter 
-    # TODO add comemnts for color
     addi $s3, $zero, 1
     addi $s4, $zero, 1
     addi $s5, $zero, 1
     
+    # TODO paint board black
     j draw_bottle  # will jump to init_capsules
 
 game_loop:
@@ -100,7 +102,7 @@ game_loop:
 
     # handle game states
     lw $t1, GAME_OVER
-    beq $s6, $t1, respond_to_Q
+    beq $s6, $t1, handle_game_over_state
     lw $t1, READY
     beq $s6, $t1, handle_ready_state
     lw $t1, ENTERING
@@ -170,6 +172,9 @@ handle_entering_state:
     addi $s7, $zero, 0  # reset fps counter to avoid sudden changes due to previous fps values
     lw $s6, FALLING
     j game_loop
+    
+handle_game_over_state:
+    j respond_to_Q
 
 skip_gravity:
     # TODO remove print
@@ -254,12 +259,24 @@ finish_keyboard_input:
 	lw $s6, READY
 	jal dequeue_capsule
     
-	# Sleep
-	li 		$v0, 32
-	li 		$a0, 1
-	syscall
-
-    # Go back to Step 1
+    # check if there's still viruses remaining
+    bne $s3, $zero, check_space 
+    bne $s4, $zero, check_space 
+    bne $s5, $zero, check_space 
+    
+    j declare_game_over
+    
+# check if spaces are filled up
+check_space:
+    lw $t0, CAPSULE_INIT_POS
+    lw $t1, 512($t0)  # color at the position of the top most row where the capsule initially falls
+    lw $t0, BLACK
+    beq $t0, $t1, game_loop
+    
+    j declare_game_over
+    
+declare_game_over:
+    lw $s6, GAME_OVER
     j game_loop
 
 keyboard_input:                     # A key is pressed

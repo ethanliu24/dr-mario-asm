@@ -801,3 +801,35 @@ check_pattern_vertical:
     
     
 move_down_delete:
+
+# a0: The addr position of where the highest pixel that was deleted on that row. Shifting what's above.
+shift_column_down:
+    addi $a0, $a0, -256
+    
+    # TODO change t registers if needed
+    add $t0, $a0, $zero  # the addr of the current pixel to potentially be shifted down
+    lw $t1, 0($a0)  # color of the current pixel
+    
+    # $t2 is the color to be checked
+    lw $t2, RED  
+    beq $t1, $t2, shift_pixel
+    lw $t2, BLUE
+    beq $t1, $t2, shift_pixel
+    lw $t2, YELLOW
+    beq $t1, $t2, shift_pixel
+    
+    #else: we are on an empty space, border, or virus. We can exit out of the function.
+    jr $ra
+    
+# t0: The address of the pixel proccessed
+# t1: color of the pixel processed
+shift_pixel:
+    lw $t2, BLACK
+    lw $t3, 256($t0)  # color of the pixel below
+    
+    # if not black, process the next pixel above the current one. Else shift down.
+    bne $t3, $t2, shift_column_down
+    sw $t2, 0($t0)  # erase current pixel
+    addi $t0, $t0, 256
+    sw $t1, 0($t0)  # draw pixel on the pixel below
+    j shift_pixel

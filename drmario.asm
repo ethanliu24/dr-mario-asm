@@ -89,7 +89,7 @@ initialize_game:
     addi $s4, $zero, 1
     addi $s5, $zero, 1
     
-    # # repaint the screen
+    # repaint the screen
     addi $t0, $zero, 0
     lw $a0, ADDR_DSPL
     addi $a1, $zero, 64
@@ -105,15 +105,6 @@ game_loop:
     addi $t1, $t1, 56
     li $t2, 0  # loop counter
     jal draw_capsule_queue
-
-    # handle game states
-    lw $t1, GAME_OVER
-    beq $s6, $t1, handle_game_over_state
-    lw $t1, READY
-    beq $s6, $t1, handle_ready_state
-    lw $t1, ENTERING
-    beq $s6, $t1, handle_entering_state
-    # else: falling state
     
     # 1a. Check if key has been pressed
     # 1b. Check which key has been pressed
@@ -121,6 +112,20 @@ game_loop:
     lw $t8, 0($t0)                  # Load first word from keyboard
     beq $t8, 1, keyboard_input      # If first word 1, key is pressed
 
+    # handle game states
+    lw $t1, READY
+    beq $s6, $t1, handle_ready_state
+    lw $t1, ENTERING
+    beq $s6, $t1, handle_entering_state
+    
+
+
+    # after key presses because need to listen to replay key press
+    lw $t1, GAME_OVER
+    beq $s6, $t1, handle_game_over_state
+    
+    # falling state
+    
     # 60 fps
     li $v0, 32
     li $a0, 16
@@ -180,7 +185,7 @@ handle_entering_state:
     j game_loop
     
 handle_game_over_state:
-    j respond_to_Q
+    j game_loop
 
 skip_gravity:
     j game_loop
@@ -314,9 +319,6 @@ check_pattern_return:               # come back to continue executing code after
 	
 	addi $t0, $t0, 4
 	sw $t1, 0($t0)
-    
-	lw $s6, READY
-	jal dequeue_capsule
 	
 	# check if there's still viruses remaining
     bne $s3, $zero, check_space 
@@ -330,9 +332,11 @@ check_space:
     lw $t0, CAPSULE_INIT_POS
     lw $t1, 512($t0)  # color at the position of the top most row where the capsule initially falls
     lw $t0, BLACK
-    beq $t0, $t1, game_loop
+    bne $t0, $t1, declare_game_over
     
-    j declare_game_over
+    lw $s6, READY
+	jal dequeue_capsule
+    j game_loop
     
 declare_game_over:
     lw $s6, GAME_OVER
@@ -342,6 +346,7 @@ keyboard_input:                     # A key is pressed
     lw $a0, 4($t0)                  # Load second word from keyboard
     addi $v0, $zero, 1
     beq $a0, 0x71, respond_to_Q     # Check if the key q was pressed
+    beq $a0, 0x72, respond_to_R     # Check if the key r was pressed
     beq $a0, 0x77, respond_to_W     # Check if the key w was pressed
     beq $a0, 0x61, respond_to_A     # Check if the key a was pressed
     beq $a0, 0x73, respond_to_S     # Check if the key s was pressed
@@ -357,6 +362,10 @@ respond_to_Q:
 	syscall
 
 	b finish_keyboard_input
+	
+respond_to_R:
+    lw $s6, READY
+    j initialize_game
 
 # rotate capsule by 90 degrees clockwise
 respond_to_W:

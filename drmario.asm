@@ -65,10 +65,16 @@ ENTERING:  # move the capsule into the bottle
 FALLING:  # player can control the capsule
     .word 3
 
-
 ##############################################################################
 # Mutable Data
 ##############################################################################
+# Stack:
+# At $sp, it stores a counter to keep track of how many capsules are dropped
+# At $sp - 48 ~ $sp - 4, it stores a queue of capsules to be displayed on the 
+# screen. There are 6 capsules in total, where each takes up 8 bytes such that
+# each 4 bytes represents a color. 
+# The front of the queue (i.e. address $sp - 8 ~ $sp - 4) is the capsule currently
+# controlled by the player
 
 ##############################################################################
 # Code
@@ -83,6 +89,10 @@ main:
 initialize_game:
     addi $s6, $zero, 1  # s6 repr the game state, 1 is ready state
     addi $s7, $zero, 0  # fps counter
+    
+    # initialize the capsule counter
+    li $t0, 5
+    sw $t0, 0($sp)  # stored on the stack, right in front of the capsule queue
     
     # initialize virus counter 
     addi $s3, $zero, 1
@@ -122,16 +132,41 @@ game_loop:
 
     # handle falling state
     
-    # 60 fps
+    # handle fps
     li $v0, 32
     li $a0, 16
     syscall  # sleeps for ~1/60s
-
-    # handle fps counter, # s7 == 60 => update capsule position
     addi $s7, $s7, 1
-    bne $s7, 60, skip_gravity
+    
+    # calculate falling speed
+    lw $t0, 0($sp)  # number of capsules
+    li $t1, 5  # let the integer be x, speed up every x blocks
+    div $t0, $t1
+    mflo $t0
+    li $t1, 5  # speed up by this much 
+    mult $t0, $t1
+    mflo $t0
+    
+    addi $t2, $zero, 60
+    sub $t2, $t2, $t0
+    jal check_speed_upperbound  # upper bound on speed
+    
+    bne $s7, $t2, skip_gravity
     addi $s7, $zero, 0
     j move_down
+    
+# clamps the speed if overflows
+# expects $t2 to be the unclamped raw speed
+check_speed_upperbound:
+    blt $t2, 10, clamp_speed
+    jr $ra
+    
+clamp_speed:
+    addi $t2, $zero, 10
+    jr $ra
+    
+skip_gravity:
+    j game_loop
 
 handle_ready_state:
     lw $t0, CAPSULE_INIT_POS
@@ -181,9 +216,6 @@ handle_entering_state:
     j game_loop
     
 handle_game_over_state:
-    j game_loop
-
-skip_gravity:
     j game_loop
     
 # reset the given area by setting everything to black
@@ -712,6 +744,12 @@ which_capsule_5:
 # Intended to be called after the current capsule can't move down anymore.
 # It will dequeue the first capsule (the current capsule) and generate another one in the queue.
 dequeue_capsule:
+    # increment capsule count
+    lw $t0, 0($sp)
+    addi $t0, $t0, 1
+    sw $t0, 0($sp)
+    
+    # set up variables
     addi $t0, $sp, -16
     addi $t1, $zero, 0
     j shift_queue

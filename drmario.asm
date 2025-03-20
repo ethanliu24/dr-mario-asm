@@ -89,8 +89,14 @@ initialize_game:
     addi $s4, $zero, 1
     addi $s5, $zero, 1
     
-    # TODO paint board black
-    j draw_bottle  # will jump to init_capsules
+    # # repaint the screen
+    addi $t0, $zero, 0
+    lw $a0, ADDR_DSPL
+    addi $a1, $zero, 64
+    addi $a2, $zero, 32
+    jal reset_area  
+    
+    j draw_bottle  # will jump to other functions that initializes the game
 
 game_loop:
     # draw the upcomming capsules
@@ -174,14 +180,41 @@ handle_entering_state:
     j game_loop
     
 handle_game_over_state:
+    # repaint the screen
+    addi $t0, $zero, 0
+    lw $a0, ADDR_DSPL
+    addi $a1, $zero, 64
+    addi $a2, $zero, 32
+    jal reset_area  # will jump to other functions to initialize the game
     j respond_to_Q
 
 skip_gravity:
-    # TODO remove print
-    # li $v0, 1
-    # li $a0, 0
-    # syscall
     j game_loop
+    
+# reset the given area by setting everything to black
+# $t0 is the loop counter
+# $a0 is the top left corner of the given area
+# $a1 is the width of the area
+# $a2 is the height of the area
+reset_area:
+    addi $t1, $zero, 0  # loop counter for resetting a row
+    addi $t2, $a0, 0
+    addi $a0, $a0, 256
+    addi $t0, $t0, 1
+    j reset_row
+    
+reset_row:
+    lw $t3, BLACK
+    sw $t3, 0($t2)
+    addi $t2, $t2, 4
+    addi $t1, $t1, 1
+    bne $t1, $a1, reset_row
+    j reset_check
+    
+# checks if the area has finished painting. if not, proceed to the next row.
+reset_check:
+    bne $t0, $a2, reset_area
+    jr $ra
 
 draw_bottle:
     li $t2, 0x808080 # color of bottle

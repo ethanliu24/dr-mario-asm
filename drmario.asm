@@ -138,7 +138,12 @@ game_loop:
     syscall  # sleeps for ~1/60s
     addi $s7, $s7, 1
     
-    # calculate falling speed
+    jal calculate_falling_speed  # calculate raw speed and clamps it
+    bne $s7, $v1, skip_gravity
+    addi $s7, $zero, 0
+    j move_down
+    
+calculate_falling_speed:
     lw $t0, 0($sp)  # number of capsules
     li $t1, 5  # let the integer be x, speed up every x blocks
     div $t0, $t1
@@ -149,20 +154,19 @@ game_loop:
     
     addi $t2, $zero, 60
     sub $t2, $t2, $t0
-    jal check_speed_upperbound  # upper bound on speed
-    
-    bne $s7, $t2, skip_gravity
-    addi $s7, $zero, 0
-    j move_down
+    j check_speed_upperbound
     
 # clamps the speed if overflows
 # expects $t2 to be the unclamped raw speed
+# returns $v0 that stores the clampped speed
 check_speed_upperbound:
     blt $t2, 10, clamp_speed
+    addi $v1, $t2, 0
     jr $ra
     
 clamp_speed:
     addi $t2, $zero, 10
+    addi $v1, $t2, 0
     jr $ra
     
 skip_gravity:
@@ -182,11 +186,21 @@ handle_ready_state:
 
 handle_entering_state:
     # animation for capsule to move into bottle
+    
+    # calculating how fast to drop in ms
+    jal calculate_falling_speed
+    li $t0, 60
+    div $t0, $v1
+    mflo $v1
+    li $t0, 1000
+    div $t0, $v1
+    mflo $v1
+    
     lw $t0, CAPSULE_INIT_POS
     addi $t1, $sp, -8
 
     li $v0, 32
-    li $a0, 1000
+    addi $a0, $v1, 0
     syscall
 
     lw $t2, BLACK
@@ -197,7 +211,7 @@ handle_entering_state:
     sw $t2, 512($t0)
 
     li $v0, 32
-    li $a0, 1000
+    addi $a0, $v1, 0
     syscall
 
     lw $t2, BLACK

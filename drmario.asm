@@ -50,6 +50,8 @@ VIRUS_YELLOW:
 
 VIRUS_DRAW_START:
     .word 0x10009464
+GAME_OVER_START:
+    .word 0x10008A68
 
 HEIGHT:
     .word 0x000018
@@ -319,7 +321,7 @@ handle_game_over_state:
     j game_loop
 
 # reset the given area by setting everything to black
-# $t0 is the loop counter (number of rows I think - Jai)
+# $t0 is the loop counter (initial counter, most probably 0)
 # $a0 is the top left corner of the given area
 # $a1 is the width of the area
 # $a2 is the height of the area
@@ -697,6 +699,112 @@ draw_dr_mario:
     j generate_virus
 
 
+draw_game_over:
+    lw $t0, GAME_OVER_START
+
+    li $t1, 0xffffff    # white
+
+    # row 1, word 1
+    add $t7, $zero, $t0
+    sw $t1, 0($t7)
+    sw $t1, 4($t7)
+
+    sw $t1, 20($t7)
+
+    sw $t1, 32($t7)
+    sw $t1, 36($t7)
+    sw $t1, 40($t7)
+
+    sw $t1, 48($t7)
+    sw $t1, 52($t7)
+    sw $t1, 56($t7)
+
+    # row 1, word 2
+    add $t7, $t0, 76
+    sw $t1, 0($t7)
+    sw $t1, 4($t7)
+    sw $t1, 8($t7)
+
+    sw $t1, 16($t7)
+    sw $t1, 24($t7)
+
+    sw $t1, 32($t7)
+    sw $t1, 36($t7)
+    sw $t1, 40($t7)
+
+    sw $t1, 48($t7)
+    sw $t1, 52($t7)
+
+
+    # row 2, word 1
+    addi $t0, $t0, 256
+
+    add $t7, $zero, $t0
+    sw $t1, 0($t7)
+    sw $t1, 8($t7)
+
+    sw $t1, 16($t7)
+    sw $t1, 24($t7)
+
+    sw $t1, 32($t7)
+    sw $t1, 36($t7)
+    sw $t1, 40($t7)
+
+    sw $t1, 48($t7)
+    sw $t1, 52($t7)
+
+    # row 2, word 2
+    add $t7, $t0, 76
+    sw $t1, 0($t7)
+    sw $t1, 8($t7)
+
+    sw $t1, 16($t7)
+    sw $t1, 24($t7)
+
+    sw $t1, 32($t7)
+    sw $t1, 36($t7)
+
+    sw $t1, 48($t7)
+    sw $t1, 52($t7)
+
+
+    # row 3, word 1
+    addi $t0, $t0, 256
+
+    add $t7, $zero, $t0
+    sw $t1, 0($t7)
+    sw $t1, 4($t7)
+    sw $t1, 8($t7)
+
+    sw $t1, 16($t7)
+    sw $t1, 24($t7)
+
+    sw $t1, 32($t7)
+    sw $t1, 40($t7)
+
+    sw $t1, 48($t7)
+    sw $t1, 52($t7)
+    sw $t1, 56($t7)
+
+    # row 3, word 2
+    add $t7, $t0, 76
+    sw $t1, 0($t7)
+    sw $t1, 4($t7)
+    sw $t1, 8($t7)
+
+    sw $t1, 20($t7)
+
+    sw $t1, 32($t7)
+    sw $t1, 36($t7)
+    sw $t1, 40($t7)
+
+    sw $t1, 48($t7)
+    sw $t1, 56($t7)
+
+
+    jr $ra
+
+
 finish_keyboard_input:
     # generate new capsule when can't move down (i.e. when $v0 == 0)
 	beq $v0, 1, game_loop
@@ -761,6 +869,8 @@ declare_game_over:
     li $v0, 32
     li $a0, 10
     syscall
+
+    jal draw_game_over
 
     la $t0, GAME_OVER_SFX
     lw $t1, GAME_OVER_SFX_LEN

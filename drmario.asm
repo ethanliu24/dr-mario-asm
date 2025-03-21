@@ -141,7 +141,7 @@ initialize_game:
     addi $s7, $zero, 0  # fps counter
 
     # initialize the capsule counter
-    li $t0, 5
+    li $t0, 0
     sw $t0, 0($sp)  # stored on the stack, right in front of the capsule queue
 
     # initialize virus counter

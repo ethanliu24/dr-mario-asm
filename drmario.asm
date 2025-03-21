@@ -64,6 +64,27 @@ ENTERING:  # move the capsule into the bottle
     .word 2
 FALLING:  # player can control the capsule
     .word 3
+    
+# bash related vairables. the length is the # of bytes to write in the command file
+INSTR_FILE:
+    .asciiz "COPY-YOUR-ABS-PATH-TO-THE-INSTR-FILE"
+SPACE:
+    .asciiz ""
+DROP_SFX:
+    .asciiz "sfx.wav"
+    .align 2
+DROP_SFX_LEN:
+    .word 7
+SKIP_CMD:
+    .asciiz "SKIP"
+    .align 2
+SKIK_CMD_LEN:
+    .word 4
+EXIT_CMD:
+    .asciiz "EXIT"
+    .align 2
+EXIT_CMD_LEN:
+    .word 4
 
 ##############################################################################
 # Mutable Data
@@ -1249,3 +1270,56 @@ shift_pixel:
     addi $a1, $a1, 256
     sw $a2, 0($a1)  # draw pixel on the pixel below
     j shift_pixel
+
+kill_bash:
+    la $t0, EXIT_CMD
+    lw $t1, EXIT_CMD_LEN
+    j set_up_bash_write
+    
+# $t0: music file name
+# $t1: music file name length
+play_sfx:
+    j set_up_bash_write
+    
+set_up_bash_write:
+    addi $t2, $zero, 0
+    j write_to_bash_instr
+    
+# $t0: cmd name
+# $t1: cmd str length
+write_to_bash_instr:
+    # open file
+    li $v0, 13
+    la $a0, INSTR_FILE
+    li $a1, 1  # open for writing
+    li $a2, 0
+    syscall  # File descriptor gets returned in $v0
+    move $a3, $v0  # save file descriptor Syscall 15 requieres file descriptor in $a0
+    
+    # write to file
+    li $v0, 15
+    move $a0, $a3
+    addi $a1, $t0, 0
+    addi $a2, $t1, 0
+    syscall
+    
+    # close file
+    li $v0, 16 
+    move $a0, $a3
+    syscall
+    
+    addi $t2, $t2, 1
+    bne $t2, 2, erase_last_cmd
+    jr $ra
+    
+# erases the previous command written in the instruction file so bash won't execute twice
+# since opening a file will overwrite instead of append
+erase_last_cmd:
+    # sleep a little bit before erasing so bash can catch the cmd
+    li $v0, 32
+    li $a0, 100
+    syscall
+    
+    la $t0, SKIP_CMD
+    lw $t1, SKIK_CMD_LEN
+    j write_to_bash_instr

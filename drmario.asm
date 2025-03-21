@@ -272,9 +272,6 @@ handle_entering_state:
     j game_loop
     
 handle_game_over_state:
-    la $t0, GAME_OVER_SFX
-    lw $t1, GAME_OVER_SFX_LEN
-    jal play_sfx
     j game_loop
     
 # reset the given area by setting everything to black
@@ -426,6 +423,10 @@ check_space:
     j game_loop
     
 declare_game_over:
+    la $t0, GAME_OVER_SFX
+    lw $t1, GAME_OVER_SFX_LEN
+    jal play_sfx
+    
     lw $s6, GAME_OVER
     j game_loop
 

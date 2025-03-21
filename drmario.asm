@@ -126,10 +126,6 @@ EXIT_CMD_LEN:
 
     # Run the game.
 main:
-    la $t0, GAME_OVER_SFX
-    lw $t1, GAME_OVER_SFX_LEN
-    jal play_sfx
-    jal play_sfx
     j initialize_game
 
 initialize_game:

@@ -103,8 +103,8 @@ THEME_SONG:
     .align 2
 THEME_SONG_LEN:
     .word 9
-THEME_SONG_MUSIC_LENGTH:  # the actual seconds the theme song is - it's 120 seconds long.
-    .word 100
+THEME_SONG_LOOP_INTERVAL:  # loop the song after this interval (in s), i.e. the length of the song
+    .word 80
     
 KILL_SFX_CMD:
     .asciiz "KILL_SFX"
@@ -161,9 +161,9 @@ initialize_game:
     sw $t0, 0($sp)  # stored on the stack, right in front of the capsule queue
 
     # initialize virus counter
-    addi $s3, $zero, 0
-    addi $s4, $zero, 0
-    addi $s5, $zero, 0
+    addi $s3, $zero, 1
+    addi $s4, $zero, 1
+    addi $s5, $zero, 1
 
     # repaint the screen
     addi $t0, $zero, 0
@@ -253,7 +253,7 @@ check_theme_song:
     li $t0, 1000
     div $a0, $t0
     mflo $a0  # convert to s
-    lw $t0, THEME_SONG_MUSIC_LENGTH
+    lw $t0, THEME_SONG_LOOP_INTERVAL
     bgt $a0, $t0, play_theme_song
     jr $ra
 

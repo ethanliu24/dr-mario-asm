@@ -98,6 +98,14 @@ GAME_OVER_SFX:
 GAME_OVER_SFX_LEN:
     .word 13
     
+THEME_SONG:
+    .ascii "theme.mp3"
+    .align 2
+THEME_SONG_LEN:
+    .word 9
+THEME_SONG_MUSIC_LENGTH:  # the actual seconds the theme song is - it's 120 seconds long.
+    .word 100
+    
 KILL_SFX_CMD:
     .asciiz "KILL_SFX"
     .align 2
@@ -131,6 +139,8 @@ EXIT_CMD_LEN:
 # $sp - 56 ~ $sp - 52:
 #   Stores temporary values to read later for checking horizontal and vertical
 #   pattern removal.
+# $sp - 60
+#   Stores the last time the game background was played
 
 ##############################################################################
 # Code
@@ -151,9 +161,9 @@ initialize_game:
     sw $t0, 0($sp)  # stored on the stack, right in front of the capsule queue
 
     # initialize virus counter
-    addi $s3, $zero, 1
-    addi $s4, $zero, 1
-    addi $s5, $zero, 1
+    addi $s3, $zero, 0
+    addi $s4, $zero, 0
+    addi $s5, $zero, 0
 
     # repaint the screen
     addi $t0, $zero, 0
@@ -161,10 +171,15 @@ initialize_game:
     addi $a1, $zero, 64
     addi $a2, $zero, 32
     jal reset_area
+    
+    # start theme song
+    jal play_theme_song
 
     j draw_bottle  # will jump to other functions that initializes the game
 
 game_loop:
+    jal check_theme_song  # plays the theme song if ended
+    
     # draw the upcomming capsules
     addi $t0, $sp, -16
     lw $t1, CAPSULE_INIT_POS
@@ -227,6 +242,19 @@ check_speed_upperbound:
 clamp_speed:
     addi $t2, $zero, 10
     addi $v1, $t2, 0
+    jr $ra
+    
+check_theme_song:
+    # check if song ended using current time and time the song was played
+    li $v0, 30
+    syscall
+    lw $t0, -60($sp)  # time the song was played
+    subu $a0, $a0, $t0  # time in ms
+    li $t0, 1000
+    div $a0, $t0
+    mflo $a0  # convert to s
+    lw $t0, THEME_SONG_MUSIC_LENGTH
+    bgt $a0, $t0, play_theme_song
     jr $ra
 
 skip_gravity:
@@ -1722,6 +1750,17 @@ kill_all_sfx:
 # $t0: music file name
 # $t1: music file name length
 play_sfx:
+    j set_up_bash_write
+    
+# Assumes no import values for $v0
+play_theme_song:
+    # write the current playing time on stack so the prog knows when to loop
+    li $v0, 30
+    syscall  # $a0 will store the current time in s
+    sw $a0, -60($sp)
+    
+    la $t0, THEME_SONG
+    lw $t1, THEME_SONG_LEN
     j set_up_bash_write
 
 set_up_bash_write:

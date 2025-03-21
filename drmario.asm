@@ -818,9 +818,9 @@ generate_virus_red:
     li $a1, 17
     syscall
 
-    add $t0, $zero, $a0  # random column
+    add $t0, $zero, $a0 # random column
     mult $t0, $t7
-    mflo $t0        # multiply by 4 and store result
+    mflo $t0            # multiply by 4 and store result
 
     # generate random number between 12 and 24 (exclusive)to decide which row to display virus on
     # result stored in $a0
@@ -852,9 +852,9 @@ generate_virus_blue:
     li $a1, 17
     syscall
 
-    add $t0, $zero, $a0  # random column
+    add $t0, $zero, $a0 # random column
     mult $t0, $t7
-    mflo $t0        # multiply by 4 and store result
+    mflo $t0            # multiply by 4 and store result
 
     # generate random number between 12 and 24 (exclusive)to decide which row to display virus on
     # result stored in $a0
@@ -886,9 +886,9 @@ generate_virus_yellow:
     li $a1, 17
     syscall
 
-   add $t0, $zero, $a0  # random column
+    add $t0, $zero, $a0 # random column
     mult $t0, $t7
-    mflo $t0        # multiply by 4 and store result
+    mflo $t0            # multiply by 4 and store result
 
     # generate random number between 12 and 24 (exclusive)to decide which row to display virus on
     # result stored in $a0
@@ -930,9 +930,10 @@ check_pattern_horizontal:
     lw $t6, GRAY            # GRAY
     lw $t5, BLACK           # BLACK
 
-    lw $t2, GRAY    # prev colour, initially GRAY
-    li $t3, 1       # count of current colour, initially 1
+    lw $t2, GRAY            # prev colour, initially GRAY
+    li $t3, 1               # count of current colour, initially 1
 
+    
 check_pattern_horizontal_inner_loop:
     lw $t0, 0($t7)                                      # colour at current address
     
@@ -966,7 +967,8 @@ check_pattern_horizontal_reset:
 check_pattern_horizontal_new:
     # new pixel colour found, check if >= 4 found for prev
     lw $t4, VIRUS_RED
-    beq $t0, $t4, check_pattern_horizontal_new_red_virus        # red virus found
+    beq $t0, $t4, check_pattern_horizontal_new_red_virus        # red virus found at current pixel
+    
     lw $t4, VIRUS_BLUE
     beq $t0, $t4, check_pattern_horizontal_new_blue_virus       # blue virus found
     lw $t4, VIRUS_YELLOW
@@ -1028,14 +1030,16 @@ check_pattern_horizontal_found:
 check_pattern_horizontal_found_loop:
     beq $t1, $t7, check_pattern         # when we finish deleting current row and pushing the respective columns down, we want to call check_pattern again
     
+    lw $t8, 0($t1)                                                  # store colour at current pixel of iteration
+    
     lw $a1, VIRUS_RED
-    beq $a1, $t0, check_pattern_horizontal_found_loop_red_virus     # if current pixel is the virus
+    beq $a1, $t8, check_pattern_horizontal_found_loop_red_virus     # if current pixel is the virus
     
     lw $a1, VIRUS_BLUE
-    beq $a1, $t0, check_pattern_horizontal_found_loop_blue_virus    # if current pixel is the virus
+    beq $a1, $t8, check_pattern_horizontal_found_loop_blue_virus    # if current pixel is the virus
     
     lw $a1, VIRUS_YELLOW
-    beq $a1, $t0, check_pattern_horizontal_found_loop_yellow_virus  # if current pixel is the virus
+    beq $a1, $t8, check_pattern_horizontal_found_loop_yellow_virus  # if current pixel is the virus
     
     j check_pattern_horizontal_found_loop_cont                      # no virus
 
@@ -1179,16 +1183,18 @@ check_pattern_vertical_found:
     add $t1, $t7, $t4       # go back to start of column pattern
     
 check_pattern_vertical_found_loop:
-    beq $t1, $t7, check_pattern_vertical_call_shift_down     # when we finish deleting current column and pushing the respective columns down, we want to call check_pattern again
-
+    beq $t1, $t7, check_pattern_vertical_call_shift_down            # when we finish deleting current column and pushing the respective columns down, we want to call check_pattern again
+    
+    lw $t8, 0($t1)                                                  # store colour at current pixel of iteration
+    
     lw $a1, VIRUS_RED
-    beq $a1, $t0, check_pattern_vertical_found_loop_red_virus       # if current pixel is the virus
+    beq $a1, $t8, check_pattern_vertical_found_loop_red_virus       # if current pixel is the virus
     
     lw $a1, VIRUS_BLUE
-    beq $a1, $t0, check_pattern_vertical_found_loop_blue_virus      # if current pixel is the virus
+    beq $a1, $t8, check_pattern_vertical_found_loop_blue_virus      # if current pixel is the virus
     
     lw $a1, VIRUS_YELLOW
-    beq $a1, $t0, check_pattern_vertical_found_loop_yellow_virus    # if current pixel is the virus
+    beq $a1, $t8, check_pattern_vertical_found_loop_yellow_virus    # if current pixel is the virus
     
     j check_pattern_vertical_found_loop_cont                        # no virus
 
@@ -1218,11 +1224,12 @@ check_pattern_vertical_add:
     addi $t3, $t3, 1        # increment number of occurences
     j check_pattern_vertical_inner_loop_cont
     
+
+
 # a0: The addr position of where the highest pixel that was deleted on that row. Shifting what's above.
 shift_column_down:
     addi $a0, $a0, -256
     
-    # TODO change t registers if needed
     add $a1, $a0, $zero  # the addr of the current pixel to potentially be shifted down
     lw $a2, 0($a0)  # color of the current pixel
     

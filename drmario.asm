@@ -111,12 +111,17 @@ EXIT_CMD_LEN:
 # Mutable Data
 ##############################################################################
 # Stack:
-# At $sp, it stores a counter to keep track of how many capsules are dropped
-# At $sp - 48 ~ $sp - 4, it stores a queue of capsules to be displayed on the 
-# screen. There are 6 capsules in total, where each takes up 8 bytes such that
-# each 4 bytes represents a color. 
-# The front of the queue (i.e. address $sp - 8 ~ $sp - 4) is the capsule currently
-# controlled by the player
+# $sp: 
+#   Stores a counter to keep track of how many capsules are dropped
+# $sp - 48 ~ $sp - 4: 
+#   Stores a queue of capsules to be displayed on the 
+#   screen. There are 6 capsules in total, where each takes up 8 bytes such that
+#   each 4 bytes represents a color. 
+#   The front of the queue (i.e. address $sp - 8 ~ $sp - 4) is the capsule currently
+#   controlled by the player
+# $sp - 56 ~ $sp - 52:
+#   Stores temporary values to read later for checking horizontal and vertical 
+#   pattern removal.
 
 ##############################################################################
 # Code
@@ -1108,6 +1113,15 @@ check_pattern_horizontal_found_loop_yellow_virus:
     j check_pattern_horizontal_found_loop_cont
     
 check_pattern_horizontal_found_loop_cont:
+    # temporarily store $t0 and $t1 in stack and read it back after playing audio so fn doesn't get messed up
+    sw $t0, -52($sp)
+    sw $t1, -56($sp)
+    la $t0, REMOVE_SFX
+    lw $t1, REMOVE_SFX_LEN
+    jal play_sfx
+    lw $t0, -52($sp)
+    lw $t1, -56($sp)
+    
     add $a0, $zero, $t1         # store current pixel memory address as first parameter
     sw $t5, 0($a0)              # make current row pattern pixel black
     
@@ -1261,6 +1275,15 @@ check_pattern_vertical_found_loop_yellow_virus:
     j check_pattern_vertical_found_loop_cont
     
 check_pattern_vertical_found_loop_cont:
+    # temporarily store $t0 and $t1 in stack and read it back after playing audio so fn doesn't get messed up
+    sw $t0, -52($sp)
+    sw $t1, -56($sp)
+    la $t0, REMOVE_SFX
+    lw $t1, REMOVE_SFX_LEN
+    jal play_sfx
+    lw $t0, -52($sp)
+    lw $t1, -56($sp)
+    
     sw $t5, 0($t1)              # make current row pattern pixel black
     addi $t1, $t1, -256         # go to next pixel in column
     j check_pattern_vertical_found_loop    
@@ -1318,10 +1341,12 @@ play_sfx:
     
 set_up_bash_write:
     addi $t2, $zero, 0
+    addi $v1, $v0, 0  # store the previous $v0 value since it will get replaced for syscalls
     j write_to_bash_instr
     
 # $t0: cmd name
 # $t1: cmd str length
+# $v1: stores the previous value of $v0 before entering here
 write_to_bash_instr:
     # open file
     li $v0, 13
@@ -1345,7 +1370,7 @@ write_to_bash_instr:
     
     addi $t2, $t2, 1
     bne $t2, 2, erase_last_cmd
-    addi $v0, $zero, 1
+    addi $v0, $v1, 0
     jr $ra
     
 # erases the previous command written in the instruction file so bash won't execute twice

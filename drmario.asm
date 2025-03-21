@@ -95,7 +95,7 @@ GAME_OVER_SFX:
     .align 2
 GAME_OVER_SFX_LEN:
     .word 13
-    
+
 THEME_SONG:
     .ascii "theme.mp3"
     .align 2
@@ -103,7 +103,7 @@ THEME_SONG_LEN:
     .word 9
 THEME_SONG_LOOP_INTERVAL:  # loop the song after this interval (in s), i.e. the length of the song
     .word 80
-    
+
 KILL_SFX_CMD:
     .asciiz "KILL_SFX"
     .align 2
@@ -155,7 +155,7 @@ initialize_game:
     addi $s7, $zero, 0  # fps counter
 
     # initialize the capsule counter
-    li $t0, 5
+    li $t0, 0
     sw $t0, 0($sp)  # stored on the stack, right in front of the capsule queue
 
     # initialize virus counter
@@ -169,7 +169,7 @@ initialize_game:
     addi $a1, $zero, 64
     addi $a2, $zero, 32
     jal reset_area
-    
+
     # start theme song
     jal play_theme_song
 
@@ -177,7 +177,7 @@ initialize_game:
 
 game_loop:
     jal check_theme_song  # plays the theme song if ended
-    
+
     # draw the upcomming capsules
     addi $t0, $sp, -16
     lw $t1, CAPSULE_INIT_POS
@@ -241,7 +241,7 @@ clamp_speed:
     addi $t2, $zero, 10
     addi $v1, $t2, 0
     jr $ra
-    
+
 check_theme_song:
     # check if song ended using current time and time the song was played
     li $v0, 30
@@ -761,7 +761,7 @@ declare_game_over:
     li $v0, 32
     li $a0, 10
     syscall
-    
+
     la $t0, GAME_OVER_SFX
     lw $t1, GAME_OVER_SFX_LEN
     jal play_sfx
@@ -800,7 +800,7 @@ respond_to_R:
     li $v0, 32
     li $a0, 10
     syscall
-    
+
     lw $s6, READY
     j initialize_game
 
@@ -1703,7 +1703,7 @@ check_pattern_vertical_found_loop_cont:
     j check_pattern_vertical_found_loop
 
 check_pattern_vertical_call_shift_down:
-    add $a0, $zero, $t1         # store current pixel memory address as first parameter
+    addi $a0, $t1, 256          # store topmost pixel memory address as first parameter
     jal shift_column_down       # shift all pixels above down
     j check_pattern
 
@@ -1748,7 +1748,7 @@ kill_bash:
     la $t0, EXIT_CMD
     lw $t1, EXIT_CMD_LEN
     j set_up_bash_write
-    
+
 # NOTE: after calling this method, put the system to sleep for 10ms or more if calling more audio right after
 kill_all_sfx:
     la $t0, KILL_SFX_CMD
@@ -1759,14 +1759,14 @@ kill_all_sfx:
 # $t1: music file name length
 play_sfx:
     j set_up_bash_write
-    
+
 # Assumes no import values for $v0
 play_theme_song:
     # write the current playing time on stack so the prog knows when to loop
     li $v0, 30
     syscall  # $a0 will store the current time in s
     sw $a0, -60($sp)
-    
+
     la $t0, THEME_SONG
     lw $t1, THEME_SONG_LEN
     j set_up_bash_write
@@ -1816,4 +1816,4 @@ erase_last_cmd:
     la $t0, SKIP_CMD
     lw $t1, SKIP_CMD_LEN
     j write_to_bash_instr
-    
+

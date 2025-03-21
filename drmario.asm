@@ -141,6 +141,9 @@ game_loop:
     jal calculate_falling_speed  # calculate raw speed and clamps it
     bne $s7, $v1, skip_gravity
     addi $s7, $zero, 0
+    
+    li $a2, 0       # set $a2 argument to one to indicate to only move down by 1
+    
     j move_down
     
 calculate_falling_speed:
@@ -330,6 +333,8 @@ back_to_draw_bottle: jr $ra
 finish_keyboard_input:
     # generate new capsule when can't move down (i.e. when $v0 == 0)
 	beq $v0, 1, game_loop
+	
+	li $s2, 0              # reset number of rotations to 0 for new capsule
 	
 	# complete the top horizontal line to be gray for check pattern
 	lw $t0, START
@@ -565,7 +570,7 @@ respond_to_S:
     addi $a2, $zero, 1  # send 1 to move_down in $a2
 
 respond_to_S_while:
-    j move_down # will terminate inside move_down
+    j move_down         # will terminate inside move_down
 
 
 # move down capsule by 1
@@ -583,9 +588,9 @@ move_down:
     addi $t6, $zero, 1  # store 1
     add $t7, $a2 $zero  # check if function called by respond_to_S, 1 if yes, 0 if not
 
-    add $v0, $zero, $zero   # initialize return value of 0
+    add $v0, $zero, $zero               # initialize return value of 0
 
-    addi $t3, $a0, 4    # go to next address horizontally
+    addi $t3, $a0, 4                    # go to next address horizontally
     beq $t3, $a1, move_down_horizontal  # if capsule is horizontal
 
 move_down_vertical:

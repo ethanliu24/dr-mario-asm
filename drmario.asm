@@ -75,7 +75,7 @@ VIRUS_DRAW_START:
     .word 0x10009464
 GAME_OVER_START:
     .word 0x10008A68
-    
+
 HEIGHT:
     .word 0x000018
 WIDTH:
@@ -96,8 +96,6 @@ FALLING:  # player can control the capsule
 # bash related vairables. the length is the # of bytes to write in the command file
 INSTR_FILE:
     .asciiz "PASTE-THE-ABSOLUTE-PATH-FROM-BASH-HERE"
-SPACE:
-    .asciiz ""
 
 ROTATE_SFX:
     .asciiz "rotate.mp3"
@@ -123,10 +121,24 @@ GAME_OVER_SFX:
 GAME_OVER_SFX_LEN:
     .word 13
 
+THEME_SONG:
+    .ascii "theme.mp3"
+    .align 2
+THEME_SONG_LEN:
+    .word 9
+THEME_SONG_LOOP_INTERVAL:  # loop the song after this interval (in s), i.e. the length of the song
+    .word 80
+
+KILL_SFX_CMD:
+    .asciiz "KILL_SFX"
+    .align 2
+KILL_SFX_CMD_LEN:
+    .word 8
+
 SKIP_CMD:
     .asciiz "SKIP"
     .align 2
-SKIK_CMD_LEN:
+SKIP_CMD_LEN:
     .word 4
 
 EXIT_CMD:
@@ -150,6 +162,8 @@ EXIT_CMD_LEN:
 # $sp - 56 ~ $sp - 52:
 #   Stores temporary values to read later for checking horizontal and vertical
 #   pattern removal.
+# $sp - 60
+#   Stores the last time the game background was played
 
 ##############################################################################
 # Code
@@ -181,9 +195,14 @@ initialize_game:
     addi $a2, $zero, 32
     jal reset_area
 
+    # start theme song
+    jal play_theme_song
+
     j draw_bottle  # will jump to other functions that initializes the game
 
 game_loop:
+    jal check_theme_song  # plays the theme song if ended
+
     # draw the upcomming capsules
     addi $t0, $sp, -16
     lw $t1, CAPSULE_INIT_POS
@@ -246,6 +265,19 @@ check_speed_upperbound:
 clamp_speed:
     addi $t2, $zero, 10
     addi $v1, $t2, 0
+    jr $ra
+
+check_theme_song:
+    # check if song ended using current time and time the song was played
+    li $v0, 30
+    syscall
+    lw $t0, -60($sp)  # time the song was played
+    subu $a0, $a0, $t0  # time in ms
+    li $t0, 1000
+    div $a0, $t0
+    mflo $a0  # convert to s
+    lw $t0, THEME_SONG_LOOP_INTERVAL
+    bgt $a0, $t0, play_theme_song
     jr $ra
 
 skip_gravity:
@@ -694,107 +726,107 @@ draw_game_over:
     lw $t0, GAME_OVER_START
 
     li $t1, 0xffffff    # white
-    
+
     # row 1, word 1
     add $t7, $zero, $t0
     sw $t1, 0($t7)
     sw $t1, 4($t7)
-    
+
     sw $t1, 20($t7)
-    
+
     sw $t1, 32($t7)
     sw $t1, 36($t7)
     sw $t1, 40($t7)
-    
+
     sw $t1, 48($t7)
     sw $t1, 52($t7)
     sw $t1, 56($t7)
-    
+
     # row 1, word 2
     add $t7, $t0, 76
     sw $t1, 0($t7)
     sw $t1, 4($t7)
     sw $t1, 8($t7)
-    
+
     sw $t1, 16($t7)
     sw $t1, 24($t7)
-    
+
     sw $t1, 32($t7)
     sw $t1, 36($t7)
     sw $t1, 40($t7)
-    
+
     sw $t1, 48($t7)
     sw $t1, 52($t7)
-    
-    
+
+
     # row 2, word 1
     addi $t0, $t0, 256
-    
+
     add $t7, $zero, $t0
     sw $t1, 0($t7)
     sw $t1, 8($t7)
-    
+
     sw $t1, 16($t7)
     sw $t1, 24($t7)
-    
+
     sw $t1, 32($t7)
     sw $t1, 36($t7)
     sw $t1, 40($t7)
-    
+
     sw $t1, 48($t7)
     sw $t1, 52($t7)
-    
+
     # row 2, word 2
     add $t7, $t0, 76
     sw $t1, 0($t7)
     sw $t1, 8($t7)
-    
+
     sw $t1, 16($t7)
     sw $t1, 24($t7)
-    
+
     sw $t1, 32($t7)
     sw $t1, 36($t7)
-    
+
     sw $t1, 48($t7)
     sw $t1, 52($t7)
-    
-    
+
+
     # row 3, word 1
     addi $t0, $t0, 256
-    
+
     add $t7, $zero, $t0
     sw $t1, 0($t7)
     sw $t1, 4($t7)
     sw $t1, 8($t7)
-    
+
     sw $t1, 16($t7)
     sw $t1, 24($t7)
-    
+
     sw $t1, 32($t7)
     sw $t1, 40($t7)
-    
+
     sw $t1, 48($t7)
     sw $t1, 52($t7)
     sw $t1, 56($t7)
-    
+
     # row 3, word 2
     add $t7, $t0, 76
     sw $t1, 0($t7)
     sw $t1, 4($t7)
     sw $t1, 8($t7)
-    
+
     sw $t1, 20($t7)
-    
+
     sw $t1, 32($t7)
     sw $t1, 36($t7)
     sw $t1, 40($t7)
-    
+
     sw $t1, 48($t7)
     sw $t1, 56($t7)
 
 
     jr $ra
-    
+
 
 finish_keyboard_input:
     # generate new capsule when can't move down (i.e. when $v0 == 0)
@@ -856,8 +888,13 @@ check_space:
     j game_loop
 
 declare_game_over:
+    jal kill_all_sfx  # kill all audio first before playing game over sfx
+    li $v0, 32
+    li $a0, 10
+    syscall
+
     jal draw_game_over
-    
+
     la $t0, GAME_OVER_SFX
     lw $t1, GAME_OVER_SFX_LEN
     jal play_sfx
@@ -892,6 +929,11 @@ respond_to_Q:
 	b finish_keyboard_input
 
 respond_to_R:
+    jal kill_all_sfx  # kill all audio first before playing game over sfx
+    li $v0, 32
+    li $a0, 10
+    syscall
+
     lw $s6, READY
     j initialize_game
 
@@ -1840,9 +1882,26 @@ kill_bash:
     lw $t1, EXIT_CMD_LEN
     j set_up_bash_write
 
+# NOTE: after calling this method, put the system to sleep for 10ms or more if calling more audio right after
+kill_all_sfx:
+    la $t0, KILL_SFX_CMD
+    lw $t1, KILL_SFX_CMD_LEN
+    j set_up_bash_write
+
 # $t0: music file name
 # $t1: music file name length
 play_sfx:
+    j set_up_bash_write
+
+# Assumes no import values for $v0
+play_theme_song:
+    # write the current playing time on stack so the prog knows when to loop
+    li $v0, 30
+    syscall  # $a0 will store the current time in s
+    sw $a0, -60($sp)
+
+    la $t0, THEME_SONG
+    lw $t1, THEME_SONG_LEN
     j set_up_bash_write
 
 set_up_bash_write:
@@ -1888,6 +1947,6 @@ erase_last_cmd:
     syscall
 
     la $t0, SKIP_CMD
-    lw $t1, SKIK_CMD_LEN
+    lw $t1, SKIP_CMD_LEN
     j write_to_bash_instr
-    
+

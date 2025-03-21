@@ -1661,7 +1661,7 @@ check_pattern_vertical_found_loop_cont:
     j check_pattern_vertical_found_loop
 
 check_pattern_vertical_call_shift_down:
-    add $a0, $zero, $t1         # store current pixel memory address as first parameter
+    addi $a0, $t1, 256          # store topmost pixel memory address as first parameter
     jal shift_column_down       # shift all pixels above down
     j check_pattern
 

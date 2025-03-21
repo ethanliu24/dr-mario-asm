@@ -46,7 +46,10 @@ VIRUS_RED:
 VIRUS_BLUE:
     .word 0xadd8e6
 VIRUS_YELLOW:
-    .word 0xffffe0
+    .word 0xffd700
+
+VIRUS_DRAW_START:
+    .word 0x10009464
 
 HEIGHT:
     .word 0x000018
@@ -236,29 +239,30 @@ handle_game_over_state:
     j game_loop
     
 # reset the given area by setting everything to black
-# $t0 is the loop counter
+# $t0 is the loop counter (number of rows I think - Jai)
 # $a0 is the top left corner of the given area
 # $a1 is the width of the area
 # $a2 is the height of the area
 reset_area:
-    addi $t1, $zero, 0  # loop counter for resetting a row
-    addi $t2, $a0, 0
+    addi $a3, $zero, 0  # loop counter for resetting a row
+    addi $v1, $a0, 0
     addi $a0, $a0, 256
     addi $t0, $t0, 1
     j reset_row
     
 reset_row:
-    lw $t3, BLACK
-    sw $t3, 0($t2)
-    addi $t2, $t2, 4
-    addi $t1, $t1, 1
-    bne $t1, $a1, reset_row
+    lw $t9, BLACK
+    sw $t9, 0($v1)
+    addi $v1, $v1, 4
+    addi $a3, $a3, 1
+    bne $a3, $a1, reset_row
     j reset_check
-    
+
 # checks if the area has finished painting. if not, proceed to the next row.
 reset_check:
     bne $t0, $a2, reset_area
     jr $ra
+
 
 draw_bottle:
     li $t2, 0x808080 # color of bottle
@@ -311,8 +315,8 @@ draw_bottle:
     li $t1, 0
     li $a0, 26
     jal draw_line_column
-
-    j generate_virus
+    
+    j draw_and_generate_viruses
 
 draw_line_row:
     beq $t1, $a0, back_to_draw_bottle
@@ -330,6 +334,289 @@ draw_line_column:
 
 back_to_draw_bottle: jr $ra
 
+# draw all the viruses, and dr. mario on the side panel
+# viruses: 7x6
+# dr. mario: 9x11
+draw_and_generate_viruses:
+draw_red_virus:
+    lw $t0, VIRUS_DRAW_START
+    
+    lw $t1, RED
+    lw $t4, VIRUS_RED
+    
+    # virus red
+    sw $t4, 0($t0)
+    sw $t4, 24($t0)
+    
+    # red
+    sw $t1, 4($t0)
+    sw $t1, 8($t0)
+    sw $t1, 12($t0)
+    sw $t1, 16($t0)
+    sw $t1, 20($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 4($t0)
+    sw $t1, 12($t0)
+    sw $t1, 20($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 0($t0)
+    sw $t1, 4($t0)
+    sw $t1, 8($t0)
+    sw $t1, 12($t0)
+    sw $t1, 16($t0)
+    sw $t1, 20($t0)
+    sw $t1, 24($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 0($t0)
+    sw $t1, 4($t0)
+    sw $t1, 20($t0)
+    sw $t1, 24($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 4($t0)
+    sw $t1, 8($t0)
+    sw $t1, 12($t0)
+    sw $t1, 16($t0)
+    sw $t1, 20($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 0($t0)
+    sw $t1, 4($t0)
+    sw $t1, 20($t0)
+    sw $t1, 24($t0)
+    
+draw_blue_virus:
+    lw $t0, VIRUS_DRAW_START
+    addi $t0, $t0, 36   # offset for blue virus
+    lw $t1, BLUE
+    lw $t4, VIRUS_BLUE
+    
+    # virus blue
+    sw $t4, 0($t0)
+    sw $t4, 24($t0)
+    
+    # blue
+    sw $t1, 4($t0)
+    sw $t1, 8($t0)
+    sw $t1, 12($t0)
+    sw $t1, 16($t0)
+    sw $t1, 20($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 4($t0)
+    sw $t1, 12($t0)
+    sw $t1, 20($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 0($t0)
+    sw $t1, 4($t0)
+    sw $t1, 8($t0)
+    sw $t1, 12($t0)
+    sw $t1, 16($t0)
+    sw $t1, 20($t0)
+    sw $t1, 24($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 0($t0)
+    sw $t1, 4($t0)
+    sw $t1, 20($t0)
+    sw $t1, 24($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 4($t0)
+    sw $t1, 8($t0)
+    sw $t1, 12($t0)
+    sw $t1, 16($t0)
+    sw $t1, 20($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 0($t0)
+    sw $t1, 4($t0)
+    sw $t1, 20($t0)
+    sw $t1, 24($t0)
+
+draw_yellow_virus:
+    lw $t0, VIRUS_DRAW_START
+    addi $t0, $t0, 72   # offset for yellow virus
+    lw $t1, YELLOW
+    lw $t4, VIRUS_YELLOW
+    
+    # virus yellow
+    sw $t4, 0($t0)
+    sw $t4, 24($t0)
+    
+    # yellow
+    sw $t1, 4($t0)
+    sw $t1, 8($t0)
+    sw $t1, 12($t0)
+    sw $t1, 16($t0)
+    sw $t1, 20($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 4($t0)
+    sw $t1, 12($t0)
+    sw $t1, 20($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 0($t0)
+    sw $t1, 4($t0)
+    sw $t1, 8($t0)
+    sw $t1, 12($t0)
+    sw $t1, 16($t0)
+    sw $t1, 20($t0)
+    sw $t1, 24($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 0($t0)
+    sw $t1, 4($t0)
+    sw $t1, 20($t0)
+    sw $t1, 24($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 4($t0)
+    sw $t1, 8($t0)
+    sw $t1, 12($t0)
+    sw $t1, 16($t0)
+    sw $t1, 20($t0)
+    
+    addi $t0, $t0, 256
+    sw $t1, 0($t0)
+    sw $t1, 4($t0)
+    sw $t1, 20($t0)
+    sw $t1, 24($t0)
+
+# $t0 - start address for dr. mario
+draw_dr_mario:
+    lw $t0, VIRUS_DRAW_START
+    addi $t0, $t0, -148 # offset for dr. mario
+    
+    lw $t1, RED
+    li $t2, 0x4B2D14    # brown, hair
+    li $t3, 0xF1C6A1    # skin
+    li $t4, 0xFFFFFF    # white, shirt
+    li $t5, 0x0066CC    # pants, blue
+    
+    # shoes
+    addi $t7, $t0, 2816 # last row
+    sw $t2, 0($t7)
+    sw $t2, 4($t7)
+    sw $t2, 8($t7)
+    sw $t2, 28($t7)
+    sw $t2, 32($t7)
+    sw $t2, 36($t7)
+    
+    addi $t7, $t7, -256 # 2nd last row
+    sw $t2, 4($t7)
+    sw $t2, 8($t7)
+    sw $t2, 28($t7)
+    sw $t2, 32($t7)
+    
+    # pants
+    addi $t7, $t0, 2304 # 3rd last row
+    sw $t5, 8($t7)
+    sw $t5, 12($t7)
+    sw $t5, 24($t7)
+    sw $t5, 28($t7)
+    
+    # shirt/body
+    addi $t7, $t0, 2048 # 4th last row
+    sw $t4, 4($t7)
+    sw $t4, 8($t7)
+    sw $t4, 12($t7)
+    sw $t4, 16($t7)
+    sw $t4, 20($t7)
+    sw $t4, 24($t7)
+    sw $t4, 28($t7)
+    sw $t4, 32($t7)
+    
+    addi $t7, $t7, -256 # 5th last row
+    sw $t4, 0($t7)
+    sw $t4, 4($t7)
+    sw $t4, 8($t7)
+    sw $t4, 12($t7)
+    sw $t4, 16($t7)
+    sw $t4, 20($t7)
+    sw $t4, 24($t7)
+    sw $t4, 28($t7)
+    sw $t4, 32($t7)
+    sw $t4, 36($t7)
+    
+    addi $t7, $t7, -256 # 6th last row
+    sw $t4, 4($t7)
+    sw $t4, 8($t7)
+    sw $t4, 12($t7)
+    sw $t1, 16($t7)
+    sw $t1, 20($t7)
+    sw $t4, 24($t7)
+    sw $t4, 28($t7)
+    sw $t4, 32($t7)
+    
+    addi $t7, $t7, -256 # 7th last row/6th row, top most part of shirt
+    sw $t4, 8($t7)
+    sw $t4, 12($t7)
+    sw $t1, 16($t7)
+    sw $t1, 20($t7)
+    sw $t1, 24($t7)
+    sw $t4, 28($t7)
+    
+    lw $t0, VIRUS_DRAW_START
+    addi $t0, $t0, -152 # offset for dr. mario
+    
+    # hair/face
+    # $t2 - haie
+    # $t3 - skin
+    add $t7, $t0, $zero # 1st row
+    sw $t2, 12($t7)
+    sw $t2, 16($t7)
+    sw $t2, 20($t7)
+    sw $t2, 24($t7)
+    sw $t2, 28($t7)
+    
+    addi $t7, $t0, 256 # 2nd row
+    sw $t2, 8($t7)
+    sw $t2, 12($t7)
+    sw $t3, 16($t7)
+    sw $t3, 20($t7)
+    sw $t3, 24($t7)
+    sw $t3, 32($t7)
+    
+    addi $t7, $t7, 256 # 3rd row
+    sw $t2, 4($t7)
+    sw $t3, 8($t7)
+    sw $t2, 12($t7)
+    sw $t3, 16($t7)
+    sw $t3, 20($t7)
+    sw $t3, 24($t7)
+    sw $t3, 28($t7)
+    sw $t3, 32($t7)
+    sw $t3, 36($t7)
+    
+    addi $t7, $t7, 256 # 4th row
+    sw $t2, 4($t7)
+    sw $t3, 8($t7)
+    sw $t2, 12($t7)
+    sw $t3, 16($t7)
+    sw $t3, 20($t7)
+    sw $t3, 24($t7)
+    sw $t3, 28($t7)
+    sw $t3, 40($t7)
+    
+    addi $t7, $t7, 256 # 5th row
+    sw $t3, 12($t7)
+    sw $t3, 16($t7)
+    sw $t3, 20($t7)
+    sw $t3, 24($t7)
+    sw $t3, 28($t7)
+    sw $t3, 32($t7)
+    sw $t3, 36($t7)
+    
+    
+    j generate_virus
+    
+    
 finish_keyboard_input:
     # generate new capsule when can't move down (i.e. when $v0 == 0)
 	beq $v0, 1, game_loop
@@ -394,6 +681,10 @@ keyboard_input:                     # A key is pressed
     addi $v0, $zero, 1
     beq $a0, 0x71, respond_to_Q     # Check if the key q was pressed
     beq $a0, 0x72, respond_to_R     # Check if the key r was pressed
+    
+    # lw $t8, ENTERING
+    # beq $s6, $t8, finish_keyboard_input  # if pixel entering, do not allow movement
+    
     beq $a0, 0x77, respond_to_W     # Check if the key w was pressed
     beq $a0, 0x61, respond_to_A     # Check if the key a was pressed
     beq $a0, 0x73, respond_to_S     # Check if the key s was pressed
@@ -1050,14 +1341,49 @@ check_pattern_horizontal_found_loop:
 
 check_pattern_horizontal_found_loop_red_virus:
     li $s3, 0                                                       # red pixel dead
+    
+    add $t8, $t0, $zero         # copy $t0 into $t8
+    
+    li $t0, 0                   # height, iterator
+    lw $a0, VIRUS_DRAW_START    # start address for red
+    li $a1, 7                   # width
+    li $a2, 7                   # height
+    jal reset_area
+    
+    add $t0, $t8, $zero         # copy back $t8 into $t0
+    
     j check_pattern_horizontal_found_loop_cont
 
 check_pattern_horizontal_found_loop_blue_virus:
     li $s4, 0                                                       # blue pixel dead
+    
+    add $t8, $t0, $zero         # copy $t0 into $t8
+    
+    li $t0, 0                   # height, iterator
+    lw $a0, VIRUS_DRAW_START    # start address for red
+    addi $a0, $a0, 36           # blue offset
+    li $a1, 7                   # width
+    li $a2, 7                   # height
+    jal reset_area
+    
+    add $t0, $t8, $zero         # copy back $t8 into $t0
+    
     j check_pattern_horizontal_found_loop_cont
     
 check_pattern_horizontal_found_loop_yellow_virus:
     li $s5, 0                                                       # yellow pixel dead
+    
+    add $t8, $t0, $zero         # copy $t0 into $t8
+    
+    li $t0, 0                   # height, iterator
+    lw $a0, VIRUS_DRAW_START    # start address for red
+    addi $a0, $a0, 72           # yellow offset
+    li $a1, 7                   # width
+    li $a2, 7                   # height
+    jal reset_area
+    
+    add $t0, $t8, $zero         # copy back $t8 into $t0
+    
     j check_pattern_horizontal_found_loop_cont
     
 check_pattern_horizontal_found_loop_cont:
@@ -1205,14 +1531,49 @@ check_pattern_vertical_found_loop:
 
 check_pattern_vertical_found_loop_red_virus:
     li $s3, 0                                                       # red pixel dead
+    
+    add $t8, $t0, $zero         # copy $t0 into $t8
+    
+    li $t0, 0                   # height, iterator
+    lw $a0, VIRUS_DRAW_START    # start address for red
+    li $a1, 7                   # width
+    li $a2, 7                   # height
+    jal reset_area
+    
+    add $t0, $t8, $zero         # copy back $t8 into $t0
+    
     j check_pattern_vertical_found_loop_cont
 
 check_pattern_vertical_found_loop_blue_virus:
     li $s4, 0                                                       # blue pixel dead
+    
+    add $t8, $t0, $zero         # copy $t0 into $t8
+    
+    li $t0, 0                   # height, iterator
+    lw $a0, VIRUS_DRAW_START    # start address for red
+    addi $a0, $a0, 36           # blue offset
+    li $a1, 7                   # width
+    li $a2, 7                   # height
+    jal reset_area
+    
+    add $t0, $t8, $zero         # copy back $t8 into $t0
+    
     j check_pattern_vertical_found_loop_cont
     
 check_pattern_vertical_found_loop_yellow_virus:
     li $s5, 0                                                       # yellow pixel dead
+    
+    add $t8, $t0, $zero         # copy $t0 into $t8
+    
+    li $t0, 0                   # height, iterator
+    lw $a0, VIRUS_DRAW_START    # start address for red
+    addi $a0, $a0, 72           # yellow offset
+    li $a1, 7                   # width
+    li $a2, 7                   # height
+    jal reset_area
+    
+    add $t0, $t8, $zero         # copy back $t8 into $t0
+    
     j check_pattern_vertical_found_loop_cont
     
 check_pattern_vertical_found_loop_cont:

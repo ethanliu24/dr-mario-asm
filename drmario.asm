@@ -182,6 +182,7 @@ game_loop:
     
     jal calculate_falling_speed  # calculate raw speed and clamps it
     bne $s7, $v1, skip_gravity
+    
     addi $s7, $zero, 0
     j move_down
     
@@ -372,6 +373,10 @@ back_to_draw_bottle: jr $ra
 finish_keyboard_input:
     # generate new capsule when can't move down (i.e. when $v0 == 0)
 	beq $v0, 1, game_loop
+	
+	la $t0, DROP_SFX
+    lw $t1, DROP_SFX_LEN
+    jal play_sfx
 	
 	# complete the top horizontal line to be gray for check pattern
 	lw $t0, START
@@ -613,10 +618,6 @@ respond_to_D_vertical_horizontal:
 
 # move capsule all the way to the bottom
 respond_to_S:
-    la $t0, DROP_SFX
-    lw $t1, DROP_SFX_LEN
-    jal play_sfx
-    
     addi $a2, $zero, 1  # send 1 to move_down in $a2
 
 respond_to_S_while:

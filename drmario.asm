@@ -67,19 +67,40 @@ FALLING:  # player can control the capsule
     
 # bash related vairables. the length is the # of bytes to write in the command file
 INSTR_FILE:
-    .asciiz "COPY-YOUR-ABS-PATH-TO-THE-INSTR-FILE"
+    .asciiz "/Users/ethanliu/projects/dr-mario-asm/bash_instr.txt"
 SPACE:
     .asciiz ""
+    
+ROTATE_SFX:
+    .asciiz "rotate.mp3"
+    .align 2
+ROTATE_SFX_LEN:
+    .word 10
+    
 DROP_SFX:
-    .asciiz "sfx.wav"
+    .asciiz "drop.mp3"
     .align 2
 DROP_SFX_LEN:
-    .word 7
+    .word 8
+    
+REMOVE_SFX:
+    .asciiz "remove.mp3"
+    .align 2
+REMOVE_SFX_LEN:
+    .word 10
+    
+GAME_OVER_SFX:
+    .asciiz "game_over.mp3"
+    .align 2
+GAME_OVER_SFX_LEN:
+    .word 13
+
 SKIP_CMD:
     .asciiz "SKIP"
     .align 2
 SKIK_CMD_LEN:
     .word 4
+    
 EXIT_CMD:
     .asciiz "EXIT"
     .align 2
@@ -105,6 +126,10 @@ EXIT_CMD_LEN:
 
     # Run the game.
 main:
+    la $t0, GAME_OVER_SFX
+    lw $t1, GAME_OVER_SFX_LEN
+    jal play_sfx
+    jal play_sfx
     j initialize_game
 
 initialize_game:
@@ -251,6 +276,9 @@ handle_entering_state:
     j game_loop
     
 handle_game_over_state:
+    la $t0, GAME_OVER_SFX
+    lw $t1, GAME_OVER_SFX_LEN
+    jal play_sfx
     j game_loop
     
 # reset the given area by setting everything to black
@@ -421,6 +449,7 @@ keyboard_input:                     # A key is pressed
     j finish_keyboard_input
 
 respond_to_Q:
+    jal kill_bash
     li $v0, 10                      # Quit gracefully
 	syscall
 
@@ -432,6 +461,10 @@ respond_to_R:
 
 # rotate capsule by 90 degrees clockwise
 respond_to_W:
+    la $t0, ROTATE_SFX
+    lw $t1, ROTATE_SFX_LEN
+    jal play_sfx
+    
     add $a0, $zero, $s0 # initialize coordinate 1
     add $a1, $zero, $s1 # initialize coordinate 2
     add $a2, $zero, $s2 # initialize number of times rotated
@@ -583,6 +616,10 @@ respond_to_D_vertical_horizontal:
 
 # move capsule all the way to the bottom
 respond_to_S:
+    la $t0, DROP_SFX
+    lw $t1, DROP_SFX_LEN
+    jal play_sfx
+    
     addi $a2, $zero, 1  # send 1 to move_down in $a2
 
 respond_to_S_while:
@@ -1310,6 +1347,7 @@ write_to_bash_instr:
     
     addi $t2, $t2, 1
     bne $t2, 2, erase_last_cmd
+    addi $v0, $zero, 1
     jr $ra
     
 # erases the previous command written in the instruction file so bash won't execute twice
@@ -1317,9 +1355,10 @@ write_to_bash_instr:
 erase_last_cmd:
     # sleep a little bit before erasing so bash can catch the cmd
     li $v0, 32
-    li $a0, 100
+    li $a0, 1
     syscall
     
     la $t0, SKIP_CMD
     lw $t1, SKIK_CMD_LEN
     j write_to_bash_instr
+    

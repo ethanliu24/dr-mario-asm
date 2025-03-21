@@ -13,6 +13,29 @@
 # - Display width in pixels:    64
 # - Display height in pixels:   32
 # - Base Address for Display:   0x10008000 ($gp)
+# 
+################################ How to Play ##################################
+# (a) Clone the git repository for the full game (https://github.com/ethanliu24/dr-mario-asm).
+# (b) Step into the repository and open a new terminal (if you want audio support - note that audio is only
+# supported on mac currently).
+# (c) Open ”drmario.asm” in your MIPS emulator of choice.
+# (d) Set the following configurations
+# - Set ”Display Width” to 64 and its unit to 1
+# - Set ”Display Height” to 32 and its unit to 1
+# - Set the display memory (i.e. $gp) to 0x10008000
+# (e) Run ”bash listener.bash” in the terminal (for audio).
+# (f) The bash script will output the absolute path to the necessary file required for audio. Copy and paste
+# this into the ”INSTR FILE” data variable in ”drmario.sm” (around line 98).
+# (g) Save and run the game!
+# (h) NOTE: To properly exit the game, press ”Q” on the keyboard. This will also terminate the bash script.
+# Otherwise, you have to manually terminate the bash script and assuming there is still audio playing, run
+# ”killall afplay” in the terminal.
+# (i) Game controls: - W: rotate capsule
+# - A: move capsule left
+# - D: move capsule right
+# - S: drop capsule
+# - Q: exit game
+# - R: replay game
 ##############################################################################
 
     .data

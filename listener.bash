@@ -22,13 +22,16 @@ do
     elif [ "$cmd" = "EXIT" ]
     then
         echo "Exiting..."
-        killall $$  # kill audio playing in all children processes
+        kill %1  # kill all bg jobs
         kill $$
         break
+    elif [ "$cmd" = "GAME_END" ]
+    then
+        kill %1
     else  # a music file
         # afplay works on mac, not sure about linux but def not windows
         audio_file=$AUDIO_DIR
         audio_file+=$cmd
-        afplay $audio_file &  # play audio in a child process
+        afplay $audio_file &  # play audio in a background job
     fi
 done

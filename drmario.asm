@@ -70,7 +70,7 @@ FALLING:  # player can control the capsule
 
 # bash related vairables. the length is the # of bytes to write in the command file
 INSTR_FILE:
-    .asciiz "/Users/ethanliu/projects/dr-mario-asm/bash_instr.txt"
+    .asciiz "PASTE-THE-ABSOLUTE-PATH-FROM-BASH-HERE"
 SPACE:
     .asciiz ""
 
@@ -97,11 +97,17 @@ GAME_OVER_SFX:
     .align 2
 GAME_OVER_SFX_LEN:
     .word 13
+    
+GAME_END_CMD:
+    .ascii "GAME_END"
+    .align 2
+GAME_END_CMD_LEN:
+    .word 8
 
 SKIP_CMD:
     .asciiz "SKIP"
     .align 2
-SKIK_CMD_LEN:
+SKIP_CMD_LEN:
     .word 4
 
 EXIT_CMD:
@@ -1755,6 +1761,6 @@ erase_last_cmd:
     syscall
 
     la $t0, SKIP_CMD
-    lw $t1, SKIK_CMD_LEN
+    lw $t1, SKIP_CMD_LEN
     j write_to_bash_instr
     

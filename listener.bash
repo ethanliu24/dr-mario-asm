@@ -25,7 +25,7 @@ do
         kill %1  # kill all bg jobs
         kill $$
         break
-    elif [ "$cmd" = "GAME_END" ]
+    elif [ "$cmd" = "KILL_SFX" ]
     then
         kill %1
     else  # a music file

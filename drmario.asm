@@ -70,7 +70,7 @@ FALLING:  # player can control the capsule
 
 # bash related vairables. the length is the # of bytes to write in the command file
 INSTR_FILE:
-    .asciiz "PASTE-THE-ABSOLUTE-PATH-FROM-BASH-HERE"
+    .asciiz "/Users/ethanliu/projects/dr-mario-asm/bash_instr.txt"
 SPACE:
     .asciiz ""
 
@@ -98,10 +98,10 @@ GAME_OVER_SFX:
 GAME_OVER_SFX_LEN:
     .word 13
     
-GAME_END_CMD:
-    .ascii "GAME_END"
+KILL_SFX_CMD:
+    .asciiz "KILL_SFX"
     .align 2
-GAME_END_CMD_LEN:
+KILL_SFX_CMD_LEN:
     .word 8
 
 SKIP_CMD:
@@ -731,6 +731,7 @@ check_space:
     j game_loop
 
 declare_game_over:
+    jal kill_all_sfx  # kill all audio first before playing game over sfx
     la $t0, GAME_OVER_SFX
     lw $t1, GAME_OVER_SFX_LEN
     jal play_sfx
@@ -1711,6 +1712,11 @@ shift_pixel:
 kill_bash:
     la $t0, EXIT_CMD
     lw $t1, EXIT_CMD_LEN
+    j set_up_bash_write
+    
+kill_all_sfx:
+    la $t0, KILL_SFX_CMD
+    lw $t1, KILL_SFX_CMD_LEN
     j set_up_bash_write
 
 # $t0: music file name

@@ -760,6 +760,10 @@ check_space:
 
 declare_game_over:
     jal kill_all_sfx  # kill all audio first before playing game over sfx
+    li $v0, 32
+    li $a0, 10
+    syscall
+    
     la $t0, GAME_OVER_SFX
     lw $t1, GAME_OVER_SFX_LEN
     jal play_sfx
@@ -794,6 +798,11 @@ respond_to_Q:
 	b finish_keyboard_input
 
 respond_to_R:
+    jal kill_all_sfx  # kill all audio first before playing game over sfx
+    li $v0, 32
+    li $a0, 10
+    syscall
+    
     lw $s6, READY
     j initialize_game
 
@@ -1742,6 +1751,7 @@ kill_bash:
     lw $t1, EXIT_CMD_LEN
     j set_up_bash_write
     
+# NOTE: after calling this method, put the system to sleep for 10ms or more if calling more audio right after
 kill_all_sfx:
     la $t0, KILL_SFX_CMD
     lw $t1, KILL_SFX_CMD_LEN

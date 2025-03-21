@@ -70,9 +70,7 @@ FALLING:  # player can control the capsule
 
 # bash related vairables. the length is the # of bytes to write in the command file
 INSTR_FILE:
-    .asciiz "/Users/ethanliu/projects/dr-mario-asm/bash_instr.txt"
-SPACE:
-    .asciiz ""
+    .asciiz "PASTE-THE-ABSOLUTE-PATH-FROM-BASH-HERE"
 
 ROTATE_SFX:
     .asciiz "rotate.mp3"

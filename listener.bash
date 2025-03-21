@@ -22,12 +22,12 @@ do
     elif [ "$cmd" = "EXIT" ]
     then
         echo "Exiting..."
-        kill %1  # kill all bg jobs
+        pkill -P $$ afplay # kill all bg music jobs
         kill $$
         break
     elif [ "$cmd" = "KILL_SFX" ]
     then
-        kill %1
+        pkill -P $$ afplay # kill all bg music jobs
     else  # a music file
         # afplay works on mac, not sure about linux but def not windows
         audio_file=$AUDIO_DIR

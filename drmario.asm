@@ -164,7 +164,16 @@ EXIT_CMD_LEN:
 #   pattern removal.
 # $sp - 60
 #   Stores the last time the game background was played
-
+#
+# Saved Registers:
+# s0 - top/left pixel address of current capsule
+# s1 - bottom/right pixel address of current capsule
+# s2 - number of times current capsule is rotated
+# s3 - red virus alive status (0 if dead, 1 if alive)
+# s4 - blue virus alive status (0 if dead, 1 if alive)
+# s5 - yellow virus alive status (0 if dead, 1 if alive)
+# s6 - game state (READY, GAME_OVER, ENTERING, FALLING)
+# s7 - the fps counter
 ##############################################################################
 # Code
 ##############################################################################

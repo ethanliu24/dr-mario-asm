@@ -152,19 +152,19 @@ EXIT_CMD_LEN:
 ##############################################################################
 # Stack:
 # $sp:
-#   Stores a counter to keep track of how many capsules are dropped
+  # Stores a counter to keep track of how many capsules are dropped
 # $sp - 48 ~ $sp - 4:
-#   Stores a queue of capsules to be displayed on the
-#   screen. There are 6 capsules in total, where each takes up 8 bytes such that
-#   each 4 bytes represents a color.
-#   The front of the queue (i.e. address $sp - 8 ~ $sp - 4) is the capsule currently
-#   controlled by the player
+  # Stores a queue of capsules to be displayed on the
+  # screen. There are 6 capsules in total, where each takes up 8 bytes such that
+  # each 4 bytes represents a color.
+  # The front of the queue (i.e. address $sp - 8 ~ $sp - 4) is the capsule currently
+  # controlled by the player
 # $sp - 56 ~ $sp - 52:
-#   Stores temporary values to read later for checking horizontal and vertical
-#   pattern removal.
+  # Stores temporary values to read later for checking horizontal and vertical
+  # pattern removal.
 # $sp - 60
-#   Stores the last time the game background was played
-#
+  # Stores the last time the game background was played
+
 # Saved Registers:
 # s0 - top/left pixel address of current capsule
 # s1 - bottom/right pixel address of current capsule
@@ -360,6 +360,7 @@ handle_game_over_state:
 reset_area:
     addi $a3, $zero, 0  # loop counter for resetting a row
     addi $v1, $a0, 0
+
     addi $a0, $a0, 256
     addi $t0, $t0, 1
     j reset_row
@@ -1690,7 +1691,7 @@ check_pattern_vertical_inner_loop_cont:
 check_pattern_vertical_outer_loop:
     addi $t7, $t7, 6148                         # go to next column, 4 + 256x24
     lw $t0, 0($t7)                              # colour at current address
-    beq $t0, $t6, check_pattern_return          # return back to executing game code
+    beq $t0, $t6, support_fall                  # return back to executing game code
 
     # reset prev colour and count since new row
     lw $t2, GRAY
@@ -1959,3 +1960,105 @@ erase_last_cmd:
     lw $t1, SKIP_CMD_LEN
     j write_to_bash_instr
 
+# checks adjacent pixels and makes them fall
+# $t0 - address
+# $t1 - colour at address
+# $t2 - GRAY
+# $t3 - call check pattern (1 if YES, 0 if NO)
+support_fall:
+    lw $t0, START
+    addi $t0, $t0, 5888     # 256x23, to go to last row, first column
+    
+    lw $t2, GRAY
+    
+support_fall_inner_loop:
+    lw $t1, 0($t0)                  # store colour at address
+    
+    beq $t1, $t2, support_fall_outer_loop
+    
+    addi $a0, $t0, 0                # memory address argument
+    jal check_surrounding
+    
+    beq $t3, 1, support_fall_update # things fell
+    add $t3, $zero, $v0             # check whether to call check pattern again
+    addi $t0, $t0, 4
+    j support_fall_inner_loop
+
+support_fall_update:
+    addi $t0, $t0, 4
+    j support_fall_inner_loop
+
+support_fall_outer_loop:
+    addi $t0, $t0, -324             # go to row above, -256 - 4x17
+    lw $t1, 0($t0)                  # store colour at address
+    beq $t1, $t2, support_fall_end  # if outer loop ends
+    j support_fall_inner_loop       # continue iteration
+
+support_fall_end:
+    beq $t3, 0, check_pattern_return
+    j check_pattern
+    
+    
+check_surrounding:
+    lw $a1, 0($a0)  # cur pixel color
+    
+    lw $t4, BLACK
+    lw $t5, GRAY
+    lw $t6, VIRUS_RED
+    lw $t7, VIRUS_BLUE
+    lw $t8, VIRUS_YELLOW
+    
+    beq $a1, $t4, back_to_support_check
+    beq $a1, $t5, back_to_support_check
+    beq $a1, $t6, back_to_support_check
+    beq $a1, $t7, back_to_support_check
+    beq $a1, $t8, back_to_support_check
+    
+    lw $t6, YELLOW
+    lw $t7, RED
+    lw $t8, BLUE
+    
+    li $v0, 0       # 0 means pixel can't fall
+    lw $a1, 0($a0)  # cur pixel color
+    
+    lw $t9, -4($a0)  # left pixel color
+    beq $t9, $t6, back_to_support_check
+    beq $t9, $t7, back_to_support_check
+    beq $t9, $t8, back_to_support_check
+    
+    lw $t9, 4($a0)  # right pixel color
+    beq $t9, $t6, back_to_support_check
+    beq $t9, $t7, back_to_support_check
+    beq $t9, $t8, back_to_support_check
+    
+    lw $t9, 256($a0)  # bottom pixel color
+    beq $t9, $t5, back_to_support_check
+    beq $t9, $t6, back_to_support_check
+    beq $t9, $t7, back_to_support_check
+    beq $t9, $t8, back_to_support_check
+    
+    lw $t6, VIRUS_RED
+    lw $t7, VIRUS_BLUE
+    lw $t8, VIRUS_YELLOW
+    
+    beq $t9, $t6, back_to_support_check
+    beq $t9, $t7, back_to_support_check
+    beq $t9, $t8, back_to_support_check
+    
+    li $v0, 1  # 1 means pixel can fall
+
+# a0: The address of the pixel processed
+# a1: color of the pixel processed
+shift_support_pixel_down:
+    lw $a2, BLACK
+    lw $v1, 256($a0)  # color of the pixel below
+
+    # if not black, process the next pixel above the current one. Else shift down.
+    bne $v1, $a2, back_to_support_check
+    sw $a2, 0($a0)  # erase current pixel
+    addi $a0, $a0, 256
+    sw $a1, 0($a0)  # draw pixel on the pixel below
+    j shift_support_pixel_down
+    
+back_to_support_check:
+    jr $ra
